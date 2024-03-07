@@ -9,6 +9,7 @@ COPY requirements.txt .
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 COPY manage.py .
-COPY routes routes
+COPY routeApi routeApi
+COPY api api
 
 CMD python manage.py runserver
