@@ -1,27 +1,14 @@
-"""
-URL configuration for routeApi project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/5.0/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
-
-from django.contrib import admin
-from django.urls import path, include
-
-router = DefaultRouter()
-router.register(r"routes", RouteViewSet)
+from django.urls import path
+from api.views import (RouteListCreateView,
+                       RouteRetrieveUpdateDestroyView,
+                       RouteJoinView,
+                       RouteLeaveView,
+                       RouteCancelView)
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
-    path("route/", include("routeApi.urls")),
+    path('routes/', RouteListCreateView.as_view(), name='route-list-create'),
+    path('routes/<int:pk>/', RouteRetrieveUpdateDestroyView.as_view(), name='route-detail'),
+    path('routes/<int:pk>/join/', RouteJoinView.as_view(), name='route-join'),
+    path('routes/<int:pk>/leave/', RouteLeaveView.as_view(), name='route-leave'),
+    path('routes/<int:pk>/cancel/', RouteCancelView.as_view(), name='route-cancel'),
 ]
