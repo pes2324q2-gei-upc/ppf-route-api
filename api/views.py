@@ -4,6 +4,7 @@ This module contains the views for the API endpoints related to routes.
 """
 
 import logging
+import os
 
 from rest_framework.generics import RetrieveUpdateDestroyAPIView
 from rest_framework.generics import ListCreateAPIView
@@ -13,19 +14,14 @@ from rest_framework.request import Request
 from rest_framework.status import HTTP_204_NO_CONTENT
 from rest_framework.status import HTTP_200_OK
 from rest_framework.status import HTTP_201_CREATED
+
 from rest_framework.exceptions import ValidationError
 from api.serializers import PreviewRouteSerializer, RouteSerializer
-from api.serializers import CreateRouteSerializer
 from ppf.common.models.route import Route
 
 from .service.route import *
 from .service.googleMaps import computeRoute
-
-from google.maps.routing_v2 import RoutesClient
-
-from ppf.common.models.user import Driver
-
-GoogleMapsRouteClient = RoutesClient()
+from . import GoogleMapsRouteClient
 
 
 class RouteListCreateView(ListCreateAPIView):
