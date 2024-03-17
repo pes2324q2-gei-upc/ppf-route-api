@@ -38,8 +38,11 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+<<<<<<< HEAD
     "drf_yasg",
     "rest_framework",
+=======
+>>>>>>> origin/development
     "common",
     "api",
 ]
