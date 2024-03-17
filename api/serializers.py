@@ -1,81 +1,34 @@
-from typing import Dict
-from rest_framework.serializers import ModelSerializer
-
-from google.maps.routing_v2 import Route as GRoute
-from google.maps.routing_v2 import ComputeRoutesRequest
-from google.maps.routing_v2 import ComputeRoutesResponse
-
-from ppf.common.models.route import Route
+from common.models.route import Route
+from rest_framework.serializers import ModelSerializer, Serializer
 
 
 class RouteSerializer(ModelSerializer):
-
     class Meta:
         model = Route
         fields = "__all__"
-
-    def mapsRouteRequest(self) -> ComputeRoutesRequest:
-        """
-        Creates a ComputeRoutesRequest object based on the serialized data.
-
-        Returns:
-            ComputeRoutesRequest: The created ComputeRoutesRequest object.
-        """
-        assert not self.is_valid(), "Can't create a ComputeRoutesRequest from an invalid serializer"
-
-        computeRoutesRequest = ComputeRoutesRequest()
-        computeRoutesRequest.origin = {
-            "location": {
-                "latLng": {
-                    "latitude": self.data.get("originLat"),
-                    "longitude": self.data.get("originLon"),
-                }
-            }
-        }
-        computeRoutesRequest.destination = {
-            "location": {
-                "latLng": {
-                    "latitude": self.data.get("destinationLat"),
-                    "longitude": self.data.get("destinationLon"),
-                }
-            }
-        }
-        return computeRoutesRequest
-
-    @staticmethod
-    def deserializeComputeRoutesResponse(self, preview: bool, response: ComputeRoutesResponse) -> Dict:
-        """
-        Serializes a ComputeRoutesResponse object into the serializer.
-
-        Args:
-            response (ComputeRoutesResponse): The ComputeRoutesResponse object to serialize.
-
-        Returns:
-            Never: This method never returns.
-        """
-        assert isinstance(response, ComputeRoutesResponse), "Wrong type for response parameter"
-
-        route: GRoute = response.routes[0]
-
-        partial = {
-            "polyline": route.polyline,
-            "duration": route.duration.ToSeconds(),
-            "distance": route.distance,
-            "departureTime": route.departureTime,
-        }
-        if preview:
-            return partial
-
-        return {
-            "originLat": route.origin.location.latLng.latitude,
-            "originLon": route.origin.location.latLng.longitude,
-            "destinationLat": route.destination.location.latLng.latitude,
-            "destinationLon": route.destination.location.latLng.longitude,
-            **partial,
-        }
+        write_only_fields = [
+            "driver",
+            "originLat",
+            "originLon",
+            "originAlias",
+            "destinationLat",
+            "destinationLon",
+            "destinationAlias",
+            "departureTime",
+            "freeSeats",
+            "price",
+        ]
+        read_only_fields = [
+            "polyline",
+            "distance",
+            "duration",
+            "cancelled",
+            "finalized",
+            "createdAt",
+        ]
 
 
-class PreviewRouteSerializer(RouteSerializer):
+class PreviewRouteSerializer(ModelSerializer):
     class Meta:
         model = Route
         fields = [
@@ -85,10 +38,51 @@ class PreviewRouteSerializer(RouteSerializer):
             "destinationLon",
             "polyline",
             "duration",
-            "departureTime",
+            "distance",
         ]
-        extra_kwargs = {
-            "polyline": {"required": False},
-            "duration": {"required": False},
-            "departureTime": {"required": False},
-        }
+        write_only_fields = [
+            "originLat",
+            "originLon",
+            "destinationLat",
+            "destinationLon",
+        ]
+        read_only_fields = [
+            "polyline",
+            "duration",
+            "distance",
+        ]
+
+
+class ListRouteSerializer(ModelSerializer):
+    class Meta:
+        model = Route
+        fields = [
+            "driver",
+            "originAlias",
+            "destinationAlias",
+            "distance",
+            "duration",
+            "departureTime",
+            "freeSeats",
+            "price",
+        ]
+
+
+# The following fields are available in the Route model:
+# "id"
+# "driver"
+# "originLat"
+# "originLon"
+# "originAlias"
+# "destinationLat"
+# "destinationLon"
+# "destinationAlias"
+# "polyline"
+# "distance"
+# "duration"
+# "departureTime"
+# "freeSeats"
+# "price"
+# "cancelled"
+# "finalized"
+# "createdAt"

@@ -1,10 +1,10 @@
 from django.urls import path
-from api.views import RouteListCreateView
-from api.views import RouteRetrieveView
+from api.views import RouteRetrieveView, RoutePreviewView, RouteListCreateView
 
 urlpatterns = [
-    path("routes/", RouteListCreateView.as_view(), name="route-list-create"),
-    path("routes/<int:pk>/", RouteRetrieveView.as_view(), name="route-detail"),
+    path("routes", RouteListCreateView.as_view(), name="route-list-create"),
+    path("routes/preview", RoutePreviewView.as_view(), name="route-list-create"),
+    path("routes/<int:pk>", RouteRetrieveView.as_view(), name="route-detail"),
 ]
 
 from django.urls import re_path

@@ -1,12 +1,12 @@
-from ppf.common.models.route import Route
+import datetime
 from rest_framework.test import APITestCase
 from rest_framework import status
 from unittest.mock import patch
 
-from ppf.common.models.route import Route
-from ppf.common.models.user import Driver
+from common.models.route import Route
+from common.models.user import Driver
 
-from .payloads import CREATE_ROUTE_PAYLOAD, RETRIEVE_ROUTE_RESPONSE
+from .payloads import CREATE_ROUTE_PAYLOAD
 from .payloads import CREATE_ROUTE_PREVIEW_RESPONSE
 from .payloads import CREATE_ROUTE_RESPONSE
 from .payloads import MAPS_COMPUTE_RESPONSE
@@ -19,6 +19,10 @@ class RouteCreateTestCase(APITestCase):
     """
 
     def setUp(self) -> None:
+        # TODO have fixtures for this?
+        driver = Driver.objects.create(username="test", birth_date=datetime.date(1998, 10, 6))
+        driver.save()
+
         return super().setUp()
 
     def testCreateRoute(self):
@@ -48,7 +52,7 @@ class RouteCreateTestCase(APITestCase):
         Test case for creating a route that overlaps with an existing route from the same driver.
         """
         route = Route.objects.create(
-            driver=Driver.objects.create(),
+            driver=Driver.objects.get(username="test"),
             originLat=1.0,
             originLon=1.0,
             originAlias="Perú",

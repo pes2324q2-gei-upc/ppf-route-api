@@ -6,6 +6,4 @@ CLIENT_OPTIONS = {
     "quota_project_id": os.environ.get("PROJECT_ID", "none"),
 }
 
-GoogleMapsRouteClient = RoutesClient(
-    client_options=CLIENT_OPTIONS,
-)
+GoogleMapsRouteClient = RoutesClient(client_options=CLIENT_OPTIONS)

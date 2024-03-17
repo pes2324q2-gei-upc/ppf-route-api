@@ -3,20 +3,57 @@ This module contains the views for the API endpoints related to routes.
 - TODO: See how exceptions are handled by the framework
 """
 
-from rest_framework.generics import RetrieveAPIView
-from rest_framework.generics import ListCreateAPIView
+from rest_framework.generics import RetrieveAPIView, ListCreateAPIView, CreateAPIView
+
 from rest_framework.response import Response
 from rest_framework.request import Request
-from rest_framework.status import HTTP_200_OK
-from rest_framework.status import HTTP_201_CREATED
+from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_500_INTERNAL_SERVER_ERROR
 
-from rest_framework.exceptions import ValidationError
-from api.serializers import PreviewRouteSerializer, RouteSerializer
-from ppf.common.models.route import Route
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 
-from .service.route import *
 from .service.route import computeMapsRoute
-from . import GoogleMapsRouteClient
+from common.models.route import Route
+from api.serializers import (
+    RouteSerializer,
+    PreviewRouteSerializer,
+    RouteSerializer,
+    ListRouteSerializer,
+)
+
+
+class RouteRetrieveView(RetrieveAPIView):
+    """
+    Returns a detalied view of a route
+    URIs:
+    - GET  /routes/{id}
+    """
+
+    queryset = Route.objects.all()
+    serializer_class = RouteSerializer
+
+
+class RoutePreviewView(CreateAPIView):
+    """
+    Returns a preview of a route.
+    URI:
+    - POST /routes/preview
+    """
+
+    serializer_class = PreviewRouteSerializer
+
+    def post(self, request: Request, *args, **kargs):
+        serializer = self.get_serializer(data=request.data)
+
+        if not serializer.is_valid(raise_exception=True):
+            return Response(status=HTTP_400_BAD_REQUEST)
+
+        # Compute the route and return it
+        preview = computeMapsRoute(serializer)
+
+        # TODO cache the route, maybe use a hash of the coordinates as the key
+
+        return Response(preview, status=HTTP_200_OK)
 
 
 class RouteListCreateView(ListCreateAPIView):
@@ -29,49 +66,27 @@ class RouteListCreateView(ListCreateAPIView):
     - POST /routes
     """
 
-    queryset = Route.objects.all()
-    serializer_class = RouteSerializer
+    def get_queryset(self):
+        return self.queryset.filter(cancelled=False)
 
-    def post(self, request: Request, *args, **kwargs):
-        preview: bool = request.data.get("preview")
-        data: dict = request.data.get("route")
+    def get_serializer_class(self):
+        if self.request.method == "POST":
+            return RouteSerializer
+        return ListRouteSerializer
 
-        if preview:
-            routeSerializer = PreviewRouteSerializer(data=data)
-        else:
-            routeSerializer = RouteSerializer(data=data)
+    def post(self, request: Request, *args, **kargs):
+        # TODO search for a cached route to not duplicate the route request to maps api
 
-        if not routeSerializer.is_valid():
-            raise ValidationError("Invalid request body")
+        serializer: RouteSerializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(status=HTTP_400_BAD_REQUEST)
 
         # Transform the recieved data into a format that the Google Maps API can understand and send the request
-        mapsPayload = routeSerializer.mapsRouteRequest()
-        mapsRoute = computeMapsRoute(mapsPayload, GoogleMapsRouteClient)
-
-        # Deserialize the response from the Google Maps API and send it back to the client
-        computeRoutesResponseData: dict = RouteSerializer.deserializeComputeRoutesResponse(preview, mapsRoute)
-
-        # Once we have the google maps data
-        # If it's a preview, we just return the data, if not, we create the route and return the data
-        if preview:
-            computeRoutesResponseData.pop()
-            return Response(computeRoutesResponseData, status=HTTP_200_OK)
+        mapsResponseData = computeMapsRoute(serializer)
 
         # We need both the data from google maps and the data from the original request to create the route
-        complete = {**data, **computeRoutesResponseData}
-        routeSerializer = RouteSerializer(data=complete)
-        routeSerializer.is_valid(raise_exception=True)
-        routeSerializer.create()
+        completeSerializer = RouteSerializer(data={**serializer.data, **mapsResponseData})
 
-        return Response(routeSerializer.data, status=HTTP_201_CREATED)
-
-
-class RouteRetrieveView(RetrieveAPIView):
-    """
-    Retrieve, update and destroy routes by it's id.
-    URIs:
-    - GET  /routes/{id}
-    """
-
-    queryset = Route.objects.all()
-    serializer_class = RouteSerializer
+        if not completeSerializer.is_valid():
+            return Response(status=HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response(completeSerializer.data, status=HTTP_201_CREATED)
