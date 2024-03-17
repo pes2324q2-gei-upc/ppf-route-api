@@ -38,10 +38,19 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "drf_yasg",
     "rest_framework",
     "common",
     "api",
 ]
+
+# REST_FRAMEWORK = {
+#     "TEST_REQUEST_DEFAULT_FORMAT": "json",
+#     "TEST_REQUEST_RENDERER_CLASSES": [
+#         "rest_framework.renderers.MultiPartRenderer",
+#         "rest_framework.renderers.JSONRenderer",
+#     ],
+# }
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",

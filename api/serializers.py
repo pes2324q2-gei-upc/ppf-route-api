@@ -1,13 +1,11 @@
-from typing import Never
-from google.maps.routing_v2 import RoutesClient, ComputeRoutesRequest, ComputeRoutesResponse
-
-
+from typing import Dict
 from rest_framework.serializers import ModelSerializer
-from rest_framework.serializers import Serializer
-from rest_framework.serializers import CharField, FloatField
+
+from google.maps.routing_v2 import Route as GRoute
+from google.maps.routing_v2 import ComputeRoutesRequest
+from google.maps.routing_v2 import ComputeRoutesResponse
 
 from ppf.common.models.route import Route
-from google.maps.routing_v2 import Route as GRoute
 
 
 class RouteSerializer(ModelSerializer):
@@ -45,7 +43,7 @@ class RouteSerializer(ModelSerializer):
         return computeRoutesRequest
 
     @staticmethod
-    def deserializeComputeRoutesResponse(self, response: ComputeRoutesResponse) -> dict:
+    def deserializeComputeRoutesResponse(self, preview: bool, response: ComputeRoutesResponse) -> Dict:
         """
         Serializes a ComputeRoutesResponse object into the serializer.
 
@@ -58,14 +56,22 @@ class RouteSerializer(ModelSerializer):
         assert isinstance(response, ComputeRoutesResponse), "Wrong type for response parameter"
 
         route: GRoute = response.routes[0]
+
+        partial = {
+            "polyline": route.polyline,
+            "duration": route.duration.ToSeconds(),
+            "distance": route.distance,
+            "departureTime": route.departureTime,
+        }
+        if preview:
+            return partial
+
         return {
             "originLat": route.origin.location.latLng.latitude,
             "originLon": route.origin.location.latLng.longitude,
             "destinationLat": route.destination.location.latLng.latitude,
             "destinationLon": route.destination.location.latLng.longitude,
-            "polyline": route.polyline,
-            "duration": route.duration,
-            "departureTime": route.departureTime,
+            **partial,
         }
 
 
