@@ -20,7 +20,9 @@ class RouteCreateTestCase(APITestCase):
 
     def setUp(self) -> None:
         # TODO have fixtures for this?
-        driver = Driver.objects.create(username="test", birth_date=datetime.date(1998, 10, 6))
+        driver = Driver.objects.create(
+            username="test", birth_date=datetime.date(1998, 10, 6), password="testpaswordvalid"
+        )
         driver.save()
 
         return super().setUp()
