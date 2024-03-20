@@ -7,7 +7,7 @@ from api.serializers import PreviewRouteSerializer, CreateRouteSerializer
 
 X_GOOGLE_FIELDS = (
     "x-goog-fieldmask",
-    "routes.distanceMeters,routes.duration,,routes.polyline.encodedPolyline",
+    "routes.distanceMeters,routes.duration,routes.polyline.encodedPolyline",
 )
 
 
