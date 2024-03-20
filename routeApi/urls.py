@@ -14,12 +14,11 @@ from drf_yasg import openapi
 
 schema_view = get_schema_view(
     openapi.Info(
-        title="Snippets API",
+        title="Routes API",
         default_version="v1",
-        description="Test description",
+        description="The routes API provides a way to compute routes between two points.",
         terms_of_service="https://www.google.com/policies/terms/",
-        contact=openapi.Contact(email="contact@snippets.local"),
-        license=openapi.License(name="BSD License"),
+        license=openapi.License(name="Apache 2.0 License"),
     ),
     public=True,
     permission_classes=(permissions.AllowAny,),

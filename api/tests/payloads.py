@@ -3,7 +3,7 @@ from .polyline import POLYLINE
 MAPS_COMPUTE_RESPONSE = {"routes": [{"distanceMeters": 852896, "duration": "30177s", "polyline": POLYLINE}]}
 
 CREATE_ROUTE_PAYLOAD = {
-    "driver": "1",
+    "driver": 1,
     "originAlias": "BSC - Supercomputing Center",
     "originLatitude": 41.389972,
     "originLongitude": 2.115333,
@@ -16,8 +16,8 @@ CREATE_ROUTE_PAYLOAD = {
 }
 
 CREATE_ROUTE_RESPONSE = {
-    "routeId": "1",
-    "driver": "1",
+    "routeId": 1,
+    "driver": 1,
     "originAlias": "BSC - Supercomputing Center",
     "originLatitude": 41.389972,
     "originLongitude": 2.115333,

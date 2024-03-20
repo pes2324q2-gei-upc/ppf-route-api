@@ -1,18 +1,17 @@
-from time import sleep
-from api import GoogleMapsRouteClient
-from google.maps.routing_v2 import ComputeRoutesRequest, ComputeRoutesResponse, Location
-from google.maps.routing_v2 import Route as GRoute
 from typing import Union
+from google.maps.routing_v2 import ComputeRoutesRequest, ComputeRoutesResponse
+from google.maps.routing_v2 import Route as GRoute
 
-from api.serializers import PreviewRouteSerializer, RouteSerializer
+from api import GoogleMapsRouteClient
+from api.serializers import PreviewRouteSerializer, CreateRouteSerializer
 
 X_GOOGLE_FIELDS = (
     "x-goog-fieldmask",
-    "routes.distanceMeters,routes.duration,routes.polyline.encodedPolyline",
+    "routes.distanceMeters,routes.duration,,routes.polyline.encodedPolyline",
 )
 
 
-def buildMapsRouteRequest(serializer: Union[PreviewRouteSerializer]) -> ComputeRoutesRequest:
+def buildMapsRouteRequest(serializer: Union[PreviewRouteSerializer, CreateRouteSerializer]) -> ComputeRoutesRequest:
     """
     Creates a ComputeRoutesRequest object based on the passed data.
 
@@ -61,7 +60,7 @@ def deserializeMapsRoutesResponse(mapsRoute: ComputeRoutesResponse):
     }
 
 
-def computeMapsRoute(serializer: Union[PreviewRouteSerializer, RouteSerializer]):
+def computeMapsRoute(serializer: Union[PreviewRouteSerializer, CreateRouteSerializer]):
     """
     Computes the route using the Google Maps API based on the provided serializer.
 
