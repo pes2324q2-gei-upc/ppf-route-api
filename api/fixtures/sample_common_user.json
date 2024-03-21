@@ -1,0 +1,35 @@
+[
+    {
+        "model": "common.user",
+        "pk": 1,
+        "fields": {
+            "user_ptr_id": 1,
+            "birth_date": "1990-07-16",
+            "points": 0,
+            "updated_at": "2024-03-19 22:21:51.261909",
+            "created_at": "2024-03-19 22:21:50.895653"
+        }
+    },
+    {
+        "model": "common.user",
+        "pk": 2,
+        "fields": {
+            "user_ptr_id": 2,
+            "birth_date": "1991-03-31",
+            "points": 0,
+            "updated_at": "2024-03-19 22:22:03.055825",
+            "created_at": "2024-03-19 22:22:02.691276"
+        }
+    },
+    {
+        "model": "common.user",
+        "pk": 3,
+        "fields": {
+            "user_ptr_id": 3,
+            "birth_date": "1985-11-12",
+            "points": 0,
+            "updated_at": "2024-03-19 22:22:21.509399",
+            "created_at": "2024-03-19 22:22:21.150153"
+        }
+    }
+]

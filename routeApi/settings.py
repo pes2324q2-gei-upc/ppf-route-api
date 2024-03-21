@@ -26,7 +26,7 @@ SECRET_KEY = "django-insecure-3tlr8i)au#4p)jvh3=kr^)&t^91np04$j)7sdt^jgw8toin01-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DJANGO_DEBUG", "True") == "True"
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ["*"]
 
 
 # Application definition
@@ -40,7 +40,17 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "common",
     "api",
+    "rest_framework",
+    "drf_yasg",
 ]
+
+# REST_FRAMEWORK = {
+#     "TEST_REQUEST_DEFAULT_FORMAT": "json",
+#     "TEST_REQUEST_RENDERER_CLASSES": [
+#         "rest_framework.renderers.MultiPartRenderer",
+#         "rest_framework.renderers.JSONRenderer",
+#     ],
+# }
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -77,13 +87,13 @@ WSGI_APPLICATION = "routeApi.wsgi.application"
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': os.environ.get('DATABASE_ENGINE', 'django.db.backends.sqlite3'),
-        'NAME': os.environ.get('DATABASE_NAME', BASE_DIR / 'db/db.sqlite3'),
-        'USER': os.environ.get('DATABASE_USER', None),
-        'PASSWORD': os.environ.get('DATABASE_PASSWORD', None),
-        'HOST': os.environ.get('DATABASE_HOST', None),
-        'PORT': os.environ.get('DATABASE_PORT', None),
+    "default": {
+        "ENGINE": os.environ.get("DATABASE_ENGINE", "django.db.backends.sqlite3"),
+        "NAME": os.environ.get("DATABASE_NAME", BASE_DIR / "db/db.sqlite3"),
+        "USER": os.environ.get("DATABASE_USER", None),
+        "PASSWORD": os.environ.get("DATABASE_PASSWORD", None),
+        "HOST": os.environ.get("DATABASE_HOST", None),
+        "PORT": os.environ.get("DATABASE_PORT", None),
     }
 }
 
@@ -128,3 +138,14 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.TokenAuthentication",
+    ],
+}
+
+AUTHENTICATION_BACKENDS = [
+    "usrLogin.backends.EmailBackend",
+    "django.contrib.auth.backends.ModelBackend",
+]
