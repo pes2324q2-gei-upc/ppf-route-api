@@ -4,7 +4,7 @@
         "pk": 1,
         "fields": {
             "id": 1,
-            "password": "pbkdf2_sha256$720000$4Kd9ruk7DprvvpD9ZHfDsv$xM/s78uyZGeY9VGjllfRYku+ID07XQiHGCue4Mci3jM=",
+            "password": "mimadre",
             "last_login": null,
             "is_superuser": 0,
             "username": "Mordecai",
