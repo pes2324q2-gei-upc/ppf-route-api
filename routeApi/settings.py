@@ -42,15 +42,18 @@ INSTALLED_APPS = [
     "api",
     "rest_framework",
     "drf_yasg",
+    "rest_framework.authtoken",
 ]
 
-# REST_FRAMEWORK = {
-#     "TEST_REQUEST_DEFAULT_FORMAT": "json",
-#     "TEST_REQUEST_RENDERER_CLASSES": [
-#         "rest_framework.renderers.MultiPartRenderer",
-#         "rest_framework.renderers.JSONRenderer",
-#     ],
-# }
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.TokenAuthentication",
+    ]
+}
+
+SWAGGER_SETTINGS = {
+    "SECURITY_DEFINITIONS": {"api_key": {"type": "apiKey", "in": "header", "name": "Authorization"}},
+}
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -139,11 +142,6 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework.authentication.TokenAuthentication",
-    ],
-}
 
 AUTHENTICATION_BACKENDS = [
     "usrLogin.backends.EmailBackend",
