@@ -1,9 +1,11 @@
 from typing import Union
+from rest_framework.exceptions import ValidationError
 from google.maps.routing_v2 import ComputeRoutesRequest, ComputeRoutesResponse
 from google.maps.routing_v2 import Route as GRoute
 
 from api import GoogleMapsRouteClient
 from api.serializers import PreviewRouteSerializer, CreateRouteSerializer
+from common.models.route import Route, RoutePassenger
 
 X_GOOGLE_FIELDS = (
     "x-goog-fieldmask",
@@ -78,3 +80,43 @@ def computeMapsRoute(serializer: Union[PreviewRouteSerializer, CreateRouteSerial
 
     # Deserialize the response from the Google Maps API and send it back to the client
     return deserializeMapsRoutesResponse(response)
+
+
+def joinRoute(routeId: int, passengerId: int):
+    """
+    Joins a user to a route.
+
+    Args:
+        route_id (int): The ID of the route.
+        user_id (int): The ID of the user.
+    """
+    route = Route.objects.get(id=routeId)
+    if route.driver.id == passengerId:
+        raise ValidationError("Driver can't join the route", 400)
+
+    if route.isFull():
+        raise ValidationError("Route is full", 400)
+
+    if RoutePassenger.objects.filter(route_id=route.id, passenger_id=passengerId).exists():
+        raise ValidationError("User is already in the route", 400)
+
+    # check if the user is already in a route that overlaps with the current route
+    joinedRoutes = RoutePassenger.objects.filter(passenger_id=passengerId)
+    for joinedRoute in joinedRoutes:
+        if route.overlapsWith(joinedRoute.routeId):
+            raise ValidationError("User is already in a route that overlaps with the current route", 400)
+
+    RoutePassenger.objects.create(route_id=routeId, passenger_id=passengerId)
+
+
+def leaveRoute(routeId: int, passengerId: int):
+    """
+    Leaves a user from a route.
+
+    Args:
+        route_id (int): The ID of the route.
+        user_id (int): The ID of the user.
+    """
+    if not RoutePassenger.objects.filter(route_id=routeId, passenger_id=passengerId).exists():
+        raise ValidationError("User is not in the route", 400)
+    RoutePassenger.objects.filter(route_id=routeId, passenger_id=passengerId).delete()
