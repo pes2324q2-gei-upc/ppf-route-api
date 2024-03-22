@@ -1,0 +1,30 @@
+[
+    {
+        "model": "common.route",
+        "pk": 1,
+        "fields": {
+            "driver": "1",
+            "originAlias": "BSC - Supercomputing Center",
+            "originLat": 41.389972,
+            "originLon": 2.115333,
+            "destinationAlias": "Morla de la Valdería",
+            "destinationLat": 42.244062,
+            "destinationLon": -6.269438,
+            "departureTime": "2024-10-06T10:00:00Z",
+            "freeSeats": 4,
+            "price": 63.50,
+            "distance": 852896,
+            "duration": 30177,
+            "polyline": "seu{FwheLja@km@zBkGXsGs@sHyAqGyBuDaFwBcFCyFpCaEtH_Xn_@eAuKsEaKoKq@qIpODfNlElLlEjDfFp@jDPMdE??yA|LmB`DmBrLSxJzEnFxApFrFVzFPfH_FxBwFlBkDDoJe@sG??MuE",
+            "createdAt": "2024-10-05T10:00:00Z"
+        }
+    },
+    {
+        "model": "common.routePassenger",
+        "pk": 1,
+        "fields": {
+            "route": "1",
+            "passenger": "2"
+        }
+    }
+]
