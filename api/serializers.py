@@ -1,5 +1,5 @@
 from common.models.route import Route
-from rest_framework.serializers import ModelSerializer, Serializer
+from rest_framework.serializers import ModelSerializer
 
 
 class CreateRouteSerializer(ModelSerializer):
@@ -17,6 +17,7 @@ class CreateRouteSerializer(ModelSerializer):
             "freeSeats",
             "price",
         ]
+        read_only_fields = ["driver"]
 
 
 class DetaliedRouteSerializer(ModelSerializer):
