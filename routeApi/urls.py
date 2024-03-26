@@ -1,5 +1,11 @@
+from api.views import (
+    RouteJoinView,
+    RouteLeaveView,
+    RouteListCreateView,
+    RoutePreviewView,
+    RouteRetrieveView,
+)
 from django.urls import path
-from api.views import RouteJoinView, RouteLeaveView, RouteRetrieveView, RoutePreviewView, RouteListCreateView
 
 urlpatterns = [
     path("routes", RouteListCreateView.as_view(), name="route-list-create"),
@@ -10,10 +16,9 @@ urlpatterns = [
 ]
 
 from django.urls import re_path
-from rest_framework import permissions
-from rest_framework import authentication
-from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
+from drf_yasg.views import get_schema_view
+from rest_framework import authentication, permissions
 
 schema_view = get_schema_view(
     openapi.Info(

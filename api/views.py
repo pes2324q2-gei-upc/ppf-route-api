@@ -3,29 +3,31 @@ This module contains the views for the API endpoints related to routes.
 - TODO: See how exceptions are handled by the framework
 """
 
-from rest_framework.response import Response
-from rest_framework.request import Request
-from rest_framework.permissions import IsAuthenticated
+from api.serializers import (
+    CreateRouteSerializer,
+    DetaliedRouteSerializer,
+    ListRouteSerializer,
+    PreviewRouteSerializer,
+)
+from common.models.route import Route
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework.authentication import TokenAuthentication
-from rest_framework.generics import RetrieveAPIView, ListCreateAPIView, CreateAPIView, GenericAPIView
+from rest_framework.generics import (
+    CreateAPIView,
+    ListCreateAPIView,
+    RetrieveAPIView,
+)
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.request import Request
+from rest_framework.response import Response
 from rest_framework.status import (
     HTTP_200_OK,
     HTTP_201_CREATED,
     HTTP_400_BAD_REQUEST,
     HTTP_500_INTERNAL_SERVER_ERROR,
 )
-
-from drf_yasg import openapi
-from drf_yasg.utils import swagger_auto_schema
-
 from .service.route import computeMapsRoute, joinRoute, leaveRoute
-from common.models.route import Route, RoutePassenger
-from api.serializers import (
-    CreateRouteSerializer,
-    PreviewRouteSerializer,
-    DetaliedRouteSerializer,
-    ListRouteSerializer,
-)
 
 
 class RouteRetrieveView(RetrieveAPIView):
@@ -54,7 +56,7 @@ class RoutePreviewView(CreateAPIView):
     serializer_class = PreviewRouteSerializer
 
     def post(self, request: Request, *args, **kargs):
-        serializer = self.get_serializer(data={**request.data, "driver": request.user.id})
+        serializer = self.get_serializer(data={"driver": request.user.id, **request.data})  # type: ignore
 
         if not serializer.is_valid(raise_exception=True):
             return Response(status=HTTP_400_BAD_REQUEST)
@@ -96,7 +98,9 @@ class RouteListCreateView(ListCreateAPIView):
     def post(self, request: Request, *args, **kargs):
         # TODO search for a cached route to not duplicate the route request to maps api
 
-        serializer: CreateRouteSerializer = self.get_serializer(data={**request.data, "driver": request.user.id})
+        serializer: CreateRouteSerializer = self.get_serializer(
+            data={**request.data, "driver": request.user.id}  # type: ignore
+        )
         if not serializer.is_valid():
             return Response(status=HTTP_400_BAD_REQUEST)
 
