@@ -99,13 +99,13 @@ def joinRoute(routeId: int, passengerId: int):
     if route.isFull():
         raise ValidationError("Route is full", 400)
 
-    if RoutePassenger.objects.filter(route_id=route.id, passenger_id=passengerId).exists():
+    if RoutePassenger.objects.filter(route_id=route.pk, passenger_id=passengerId).exists():
         raise ValidationError("User is already in the route", 400)
 
     # check if the user is already in a route that overlaps with the current route
     joinedRoutes = RoutePassenger.objects.filter(passenger_id=passengerId)
     for joinedRoute in joinedRoutes:
-        if route.overlapsWith(joinedRoute.routeId):
+        if route.overlapsWith(joinedRoute.route):
             raise ValidationError(
                 "User is already in a route that overlaps with the current route", 400
             )
