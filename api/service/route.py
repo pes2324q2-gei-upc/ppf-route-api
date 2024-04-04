@@ -13,7 +13,9 @@ X_GOOGLE_FIELDS = (
 )
 
 
-def buildMapsRouteRequest(serializer: Union[PreviewRouteSerializer, CreateRouteSerializer]) -> ComputeRoutesRequest:
+def buildMapsRouteRequest(
+    serializer: Union[PreviewRouteSerializer, CreateRouteSerializer]
+) -> ComputeRoutesRequest:
     """
     Creates a ComputeRoutesRequest object based on the passed data.
 
@@ -91,20 +93,22 @@ def joinRoute(routeId: int, passengerId: int):
         user_id (int): The ID of the user.
     """
     route = Route.objects.get(id=routeId)
-    if route.driver.id == passengerId:
+    if route.driver.pk == passengerId:
         raise ValidationError("Driver can't join the route", 400)
 
     if route.isFull():
         raise ValidationError("Route is full", 400)
 
-    if RoutePassenger.objects.filter(route_id=route.id, passenger_id=passengerId).exists():
+    if RoutePassenger.objects.filter(route_id=route.pk, passenger_id=passengerId).exists():
         raise ValidationError("User is already in the route", 400)
 
     # check if the user is already in a route that overlaps with the current route
     joinedRoutes = RoutePassenger.objects.filter(passenger_id=passengerId)
     for joinedRoute in joinedRoutes:
-        if route.overlapsWith(joinedRoute.routeId):
-            raise ValidationError("User is already in a route that overlaps with the current route", 400)
+        if route.overlapsWith(joinedRoute.route):
+            raise ValidationError(
+                "User is already in a route that overlaps with the current route", 400
+            )
 
     RoutePassenger.objects.create(route_id=routeId, passenger_id=passengerId)
 
