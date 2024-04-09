@@ -1,0 +1,125 @@
+[
+    {
+        "model": "common.user",
+        "pk": 1,
+        "fields": {
+            "user_ptr_id": 1,
+            "birthDate": "1990-07-16",
+            "points": 0,
+            "updatedAt": "2024-03-19 22:21:51.261909",
+            "createdAt": "2024-03-19 22:21:50.895653"
+        }
+    },
+    {
+        "model": "common.user",
+        "pk": 2,
+        "fields": {
+            "user_ptr_id": 2,
+            "birthDate": "1991-03-31",
+            "points": 0,
+            "updatedAt": "2024-03-19 22:22:03.055825",
+            "createdAt": "2024-03-19 22:22:02.691276"
+        }
+    },
+    {
+        "model": "common.user",
+        "pk": 3,
+        "fields": {
+            "user_ptr_id": 3,
+            "birthDate": "1985-11-12",
+            "points": 0,
+            "updatedAt": "2024-03-19 22:22:21.509399",
+            "createdAt": "2024-03-19 22:22:21.150153"
+        }
+    },
+    {
+        "model": "auth.user",
+        "pk": 1,
+        "fields": {
+            "id": 1,
+            "password": "mimadre",
+            "last_login": null,
+            "is_superuser": 0,
+            "username": "Mordecai",
+            "last_name": "",
+            "email": "mordecai@thepark.com",
+            "is_staff": 0,
+            "is_active": 1,
+            "date_joined": "2024-03-19 22:21:50.893482",
+            "first_name": "Mordecai"
+        }
+    },
+    {
+        "model": "auth.user",
+        "pk": 2,
+        "fields": {
+            "id": 2,
+            "password": "sumadre",
+            "last_login": null,
+            "is_superuser": 0,
+            "username": "Rigby",
+            "last_name": "",
+            "email": "rigby@thepark.com",
+            "is_staff": 0,
+            "is_active": 1,
+            "date_joined": "2024-03-19 22:22:02.689467",
+            "first_name": "Rigby"
+        }
+    },
+    {
+        "model": "auth.user",
+        "pk": 3,
+        "fields": {
+            "id": 3,
+            "password": "pbkdf2_sha256$720000$UmvD5HOLqgwOHpna04VEWw$g7aN/S7FdQVfKKV2sQarjkWzShxUQER6JR3uzIZeVGQ=",
+            "last_login": null,
+            "is_superuser": 0,
+            "username": "Test",
+            "last_name": "Testingson",
+            "email": "user@test.try",
+            "is_staff": 0,
+            "is_active": 1,
+            "date_joined": "2024-03-19 22:22:21.149227",
+            "first_name": "Test"
+        }
+    },
+    {
+        "model": "authtoken.token",
+        "pk": 1,
+        "fields": {
+            "user_id": 3,
+            "key": "c65b642f6712afcdc288b9d3e643aaf1301d47ab",
+            "created": "2024-04-09 18:51:41.789429"
+        }
+    },
+    {
+        "model": "common.driver",
+        "pk": 1,
+        "fields": {
+            "parent_pointer_id": 1,
+            "dni": "123456789",
+            "driverPoints": 0,
+            "autonomy": 0
+        }
+    },
+    {
+        "model": "common.driver",
+        "pk": 2,
+        "fields": {
+            "parent_pointer_id": 2,
+            "dni": "987654321",
+            "driverPoints": 0,
+            "autonomy": 0
+        }
+    },
+    {
+        "model": "common.driver",
+        "pk": 3,
+        "fields": {
+            "parent_pointer_id": 3,
+            "dni": "456123789",
+            "driverPoints": 0,
+            "autonomy": 0
+        }
+    }
+]
