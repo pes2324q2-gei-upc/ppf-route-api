@@ -1,0 +1,37 @@
+[
+    {
+        "model": "common.chargertype",
+        "pk": 1,
+        "fields": {
+            "chargerType": "Mennekes"
+        }
+    },
+    {
+        "model": "common.chargertype",
+        "pk": 2,
+        "fields": {
+            "chargerType": "Tesla"
+        }
+    },
+    {
+        "model": "common.chargertype",
+        "pk": 3,
+        "fields": {
+            "chargerType": "Schuko"
+        }
+    },
+    {
+        "model": "common.chargertype",
+        "pk": 4,
+        "fields": {
+            "chargerType": "ChadeMO"
+        }
+    },
+    {
+        "model": "common.chargertype",
+        "pk": 5,
+        "fields": {
+            "chargerType": "CSS Combo2"
+        }
+    }
+]
