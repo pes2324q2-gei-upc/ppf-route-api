@@ -1,3 +1,4 @@
+import datetime
 from typing import Union
 from rest_framework.exceptions import ValidationError
 from google.maps.routing_v2 import ComputeRoutesRequest, ComputeRoutesResponse
@@ -6,6 +7,9 @@ from google.maps.routing_v2 import Route as GRoute
 from api import GoogleMapsRouteClient
 from api.serializers import PreviewRouteSerializer, CreateRouteSerializer
 from common.models.route import Route, RoutePassenger
+
+from service.payment import processRefund
+from common.models.payment import Payment
 
 X_GOOGLE_FIELDS = (
     "x-goog-fieldmask",
@@ -110,7 +114,7 @@ def joinRoute(routeId: int, passengerId: int):
                 "User is already in a route that overlaps with the current route", 400
             )
 
-    RoutePassenger.objects.create(route_id=routeId, passenger_id=passengerId)
+    # RoutePassenger.objects.create(route_id=routeId, passenger_id=passengerId)
 
 
 def leaveRoute(routeId: int, passengerId: int):
@@ -123,4 +127,16 @@ def leaveRoute(routeId: int, passengerId: int):
     """
     if not RoutePassenger.objects.filter(route_id=routeId, passenger_id=passengerId).exists():
         raise ValidationError("User is not in the route", 400)
-    RoutePassenger.objects.filter(route_id=routeId, passenger_id=passengerId).delete()
+
+    route = Route.objects.get(id=routeId)
+    payment = Payment.objects.filter(route_id=routeId, user_id=passengerId).first()
+    if not payment:
+        raise ValidationError("User has not paid for the route", 400)
+
+    try:
+        # Tried to leave the route less than 24 hours before departure
+        if (route.departureTime - datetime.now()).days < 1:  # type: ignore
+            processRefund(payment)
+            RoutePassenger.objects.filter(route_id=routeId, passenger_id=passengerId).delete()
+    except ValidationError:
+        raise ValidationError("Failed to refund payment", 400)
