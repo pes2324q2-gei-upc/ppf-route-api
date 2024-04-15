@@ -93,6 +93,36 @@
         }
     },
     {
+        "model": "common.preference",
+        "pk": 1,
+        "fields": {
+            "canNotTravelWithPets": true,
+            "listenToMusic": false,
+            "noSmoking": true,
+            "talkTooMuch": false
+        }
+    },
+    {
+        "model": "common.preference",
+        "pk": 2,
+        "fields": {
+            "canNotTravelWithPets": true,
+            "listenToMusic": false,
+            "noSmoking": false,
+            "talkTooMuch": false
+        }
+    },
+    {
+        "model": "common.preference",
+        "pk": 3,
+        "fields": {
+            "canNotTravelWithPets": false,
+            "listenToMusic": false,
+            "noSmoking": false,
+            "talkTooMuch": false
+        }
+    },
+    {
         "model": "common.driver",
         "pk": 1,
         "fields": {
@@ -100,14 +130,8 @@
             "dni": "123456789",
             "driverPoints": 0,
             "autonomy": 0,
-            "chargerTypes": [
-                1,
-                2
-            ],
-            "canNotTravelWithPets": true,
-            "listenToMusic": false,
-            "noSmoking": true,
-            "talkTooMuch": false
+            "chargerTypes": [1, 2],
+            "preference": 1
         }
     },
     {
@@ -118,13 +142,8 @@
             "dni": "987654321",
             "driverPoints": 0,
             "autonomy": 0,
-            "chargerTypes": [
-                5
-            ],
-            "canNotTravelWithPets": true,
-            "listenToMusic": false,
-            "noSmoking": false,
-            "talkTooMuch": false
+            "chargerTypes": [5],
+            "preference": 2
         }
     },
     {
@@ -135,14 +154,8 @@
             "dni": "456123789",
             "driverPoints": 0,
             "autonomy": 0,
-            "chargerTypes": [
-                3,
-                4
-            ],
-            "canNotTravelWithPets": false,
-            "listenToMusic": false,
-            "noSmoking": false,
-            "talkTooMuch": false
+            "chargerTypes": [3, 4],
+            "preference": 3
         }
     }
 ]
