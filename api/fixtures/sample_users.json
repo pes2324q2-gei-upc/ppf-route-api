@@ -131,7 +131,8 @@
             "driverPoints": 0,
             "autonomy": 0,
             "chargerTypes": [1, 2],
-            "preference": 1
+            "preference": 1,
+            "iban": "ES9121000418450200051332"
         }
     },
     {
@@ -143,7 +144,8 @@
             "driverPoints": 0,
             "autonomy": 0,
             "chargerTypes": [5],
-            "preference": 2
+            "preference": 2,
+            "iban": "ES7921000813610123456789"
         }
     },
     {
@@ -155,7 +157,8 @@
             "driverPoints": 0,
             "autonomy": 0,
             "chargerTypes": [3, 4],
-            "preference": 3
+            "preference": 3,
+            "iban": "ES4821005000512345678901"
         }
     }
 ]
