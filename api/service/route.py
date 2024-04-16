@@ -8,7 +8,7 @@ from api import GoogleMapsRouteClient
 from api.serializers import PreviewRouteSerializer, CreateRouteSerializer
 from common.models.route import Route, RoutePassenger
 
-from service.payment import processRefund
+#from service.payment import processRefund
 from common.models.payment import Payment
 
 X_GOOGLE_FIELDS = (
@@ -135,8 +135,10 @@ def leaveRoute(routeId: int, passengerId: int):
 
     try:
         # Tried to leave the route less than 24 hours before departure
-        if (route.departureTime - datetime.now()).days < 1:  # type: ignore
-            processRefund(payment)
-            RoutePassenger.objects.filter(route_id=routeId, passenger_id=passengerId).delete()
+        if (route.departureTime - datetime.now()).days >= 1:  # type: ignore
+            print("Refunding payment")
+            # processRefund(payment)
+        
+        RoutePassenger.objects.filter(route_id=routeId, passenger_id=passengerId).delete()
     except ValidationError:
         raise ValidationError("Failed to refund payment", 400)
