@@ -93,13 +93,46 @@
         }
     },
     {
+        "model": "common.preference",
+        "pk": 1,
+        "fields": {
+            "canNotTravelWithPets": true,
+            "listenToMusic": false,
+            "noSmoking": true,
+            "talkTooMuch": false
+        }
+    },
+    {
+        "model": "common.preference",
+        "pk": 2,
+        "fields": {
+            "canNotTravelWithPets": true,
+            "listenToMusic": false,
+            "noSmoking": false,
+            "talkTooMuch": false
+        }
+    },
+    {
+        "model": "common.preference",
+        "pk": 3,
+        "fields": {
+            "canNotTravelWithPets": false,
+            "listenToMusic": false,
+            "noSmoking": false,
+            "talkTooMuch": false
+        }
+    },
+    {
         "model": "common.driver",
         "pk": 1,
         "fields": {
             "parent_pointer_id": 1,
             "dni": "123456789",
             "driverPoints": 0,
-            "autonomy": 0
+            "autonomy": 0,
+            "chargerTypes": [1, 2],
+            "preference": 1,
+            "iban": "ES9121000418450200051332"
         }
     },
     {
@@ -109,7 +142,10 @@
             "parent_pointer_id": 2,
             "dni": "987654321",
             "driverPoints": 0,
-            "autonomy": 0
+            "autonomy": 0,
+            "chargerTypes": [5],
+            "preference": 2,
+            "iban": "ES7921000813610123456789"
         }
     },
     {
@@ -119,7 +155,10 @@
             "parent_pointer_id": 3,
             "dni": "456123789",
             "driverPoints": 0,
-            "autonomy": 0
+            "autonomy": 0,
+            "chargerTypes": [3, 4],
+            "preference": 3,
+            "iban": "ES4821005000512345678901"
         }
     }
 ]
