@@ -37,7 +37,7 @@
         "pk": 1,
         "fields": {
             "id": 1,
-            "password": "mimadre",
+            "password": "pbkdf2_sha256$720000$UmvD5HOLqgwOHpna04VEWw$g7aN/S7FdQVfKKV2sQarjkWzShxUQER6JR3uzIZeVGQ=",
             "last_login": null,
             "is_superuser": 0,
             "username": "Mordecai",
@@ -54,7 +54,7 @@
         "pk": 2,
         "fields": {
             "id": 2,
-            "password": "sumadre",
+            "password": "pbkdf2_sha256$720000$UmvD5HOLqgwOHpna04VEWw$g7aN/S7FdQVfKKV2sQarjkWzShxUQER6JR3uzIZeVGQ=",
             "last_login": null,
             "is_superuser": 0,
             "username": "Rigby",
@@ -130,7 +130,10 @@
             "dni": "123456789",
             "driverPoints": 0,
             "autonomy": 0,
-            "chargerTypes": [1, 2],
+            "chargerTypes": [
+                1,
+                2
+            ],
             "preference": 1,
             "iban": "ES9121000418450200051332"
         }
@@ -143,7 +146,9 @@
             "dni": "987654321",
             "driverPoints": 0,
             "autonomy": 0,
-            "chargerTypes": [5],
+            "chargerTypes": [
+                5
+            ],
             "preference": 2,
             "iban": "ES7921000813610123456789"
         }
@@ -156,7 +161,10 @@
             "dni": "456123789",
             "driverPoints": 0,
             "autonomy": 0,
-            "chargerTypes": [3, 4],
+            "chargerTypes": [
+                3,
+                4
+            ],
             "preference": 3,
             "iban": "ES4821005000512345678901"
         }
