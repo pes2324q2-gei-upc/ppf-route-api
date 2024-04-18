@@ -16,15 +16,10 @@
             "distance": 852896,
             "duration": 30177,
             "polyline": "seu{FwheLja@km@zBkGXsGs@sHyAqGyBuDaFwBcFCyFpCaEtH_Xn_@eAuKsEaKoKq@qIpODfNlElLlEjDfFp@jDPMdE??yA|LmB`DmBrLSxJzEnFxApFrFVzFPfH_FxBwFlBkDDoJe@sG??MuE",
-            "createdAt": "2024-10-05T10:00:00Z"
-        }
-    },
-    {
-        "model": "common.routePassenger",
-        "pk": 1,
-        "fields": {
-            "route": "1",
-            "passenger": "2"
+            "createdAt": "2024-10-05T10:00:00Z",
+            "passengers": [
+                3
+            ]
         }
     }
 ]

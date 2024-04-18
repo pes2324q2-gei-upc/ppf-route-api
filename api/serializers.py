@@ -1,5 +1,8 @@
+from os import read
 from common.models.route import Route
 from rest_framework.serializers import ModelSerializer
+
+from common.models.user import User
 
 
 class CreateRouteSerializer(ModelSerializer):
@@ -20,7 +23,16 @@ class CreateRouteSerializer(ModelSerializer):
         read_only_fields = ["driver"]
 
 
+class UserSerializer(ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["id", "username", "email"]
+
+
 class DetaliedRouteSerializer(ModelSerializer):
+    passengers = UserSerializer(many=True, read_only=True)
+    driver = UserSerializer(read_only=True)
+
     class Meta:
         model = Route
         fields = "__all__"
@@ -52,6 +64,13 @@ class PreviewRouteSerializer(ModelSerializer):
 
 
 class ListRouteSerializer(ModelSerializer):
+    class PassengerListSerializer(ModelSerializer):
+        class Meta:
+            model = User
+            fields = ["id"]
+
+    passengers = PassengerListSerializer(many=True, read_only=True)
+
     class Meta:
         model = Route
         fields = [
@@ -64,6 +83,7 @@ class ListRouteSerializer(ModelSerializer):
             "departureTime",
             "freeSeats",
             "price",
+            "passengers",
         ]
 
 
