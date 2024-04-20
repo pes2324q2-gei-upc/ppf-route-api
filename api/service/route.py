@@ -1,6 +1,9 @@
-import datetime
 from typing import Union
 
+from common.models.payment import Payment
+from django.utils import timezone
+import requests
+import json
 from api import GoogleMapsRouteClient
 from api.serializers import CreateRouteSerializer, PreviewRouteSerializer
 from common.models.route import Route
@@ -8,6 +11,8 @@ from common.models.user import User
 from google.maps.routing_v2 import ComputeRoutesRequest, ComputeRoutesResponse
 from google.maps.routing_v2 import Route as GRoute
 from rest_framework.exceptions import ValidationError
+from rest_framework.response import Response
+from rest_framework.authtoken.models import Token
 
 X_GOOGLE_FIELDS = (
     "x-goog-fieldmask",
@@ -126,4 +131,20 @@ def leaveRoute(routeId: int, passengerId: int):
     route = Route.objects.get(id=routeId)
     if not route.passengers.filter(id=passengerId).exists():
         raise ValidationError("User is not in the route", 400)
+
+    # Only refund if more than 24 hours before the departure time
+    if (route.departureTime - timezone.now()).days >= 1:
+        payment = Payment.objects.get(user_id=passengerId, route_id=routeId)
+        token = Token.objects.get(user_id=passengerId)
+
+        url = "http://localhost:8084/refund/"
+        data = {
+            "payment_intent_id": payment.paymentIntentId,
+        }
+        headers = {"Content-Type": "application/json", "Authorization": "Token " + token.key}
+        response = requests.post(url, data=json.dumps(data), headers=headers)
+
+        if response.status_code != 200:
+            return ValidationError("Refund failed and User did not leave the route", 400)
+
     route.passengers.filter(id=passengerId).delete()

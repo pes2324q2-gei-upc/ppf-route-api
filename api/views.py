@@ -155,7 +155,7 @@ class RouteLeaveView(CreateAPIView):
 
 class RouteCancellView(CreateAPIView):
     """
-    Join a route
+    Cancel a route
     URI:
     - POST /routes/{id}/cancell
     """
