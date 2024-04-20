@@ -1,15 +1,13 @@
 import datetime
 from typing import Union
-from rest_framework.exceptions import ValidationError
-from google.maps.routing_v2 import ComputeRoutesRequest, ComputeRoutesResponse
-from google.maps.routing_v2 import Route as GRoute
 
 from api import GoogleMapsRouteClient
-from api.serializers import PreviewRouteSerializer, CreateRouteSerializer
-from common.models.route import Route, RoutePassenger
-
-#from service.payment import processRefund
-from common.models.payment import Payment
+from api.serializers import CreateRouteSerializer, PreviewRouteSerializer
+from common.models.route import Route
+from common.models.user import User
+from google.maps.routing_v2 import ComputeRoutesRequest, ComputeRoutesResponse
+from google.maps.routing_v2 import Route as GRoute
+from rest_framework.exceptions import ValidationError
 
 X_GOOGLE_FIELDS = (
     "x-goog-fieldmask",
@@ -103,18 +101,18 @@ def joinRoute(routeId: int, passengerId: int):
     if route.isFull():
         raise ValidationError("Route is full", 400)
 
-    if RoutePassenger.objects.filter(route_id=route.pk, passenger_id=passengerId).exists():
+    if route.passengers.filter(id=passengerId).exists():
         raise ValidationError("User is already in the route", 400)
 
     # check if the user is already in a route that overlaps with the current route
-    joinedRoutes = RoutePassenger.objects.filter(passenger_id=passengerId)
+    joinedRoutes = route.passengers.filter(id=passengerId)
     for joinedRoute in joinedRoutes:
         if route.overlapsWith(joinedRoute.route):
             raise ValidationError(
                 "User is already in a route that overlaps with the current route", 400
             )
-
-    # RoutePassenger.objects.create(route_id=routeId, passenger_id=passengerId)
+    passenger = User.objects.get(id=passengerId)
+    route.passengers.add(passenger)
 
 
 def leaveRoute(routeId: int, passengerId: int):
@@ -125,20 +123,7 @@ def leaveRoute(routeId: int, passengerId: int):
         route_id (int): The ID of the route.
         user_id (int): The ID of the user.
     """
-    if not RoutePassenger.objects.filter(route_id=routeId, passenger_id=passengerId).exists():
-        raise ValidationError("User is not in the route", 400)
-
     route = Route.objects.get(id=routeId)
-    payment = Payment.objects.filter(route_id=routeId, user_id=passengerId).first()
-    if not payment:
-        raise ValidationError("User has not paid for the route", 400)
-
-    try:
-        # Tried to leave the route less than 24 hours before departure
-        if (route.departureTime - datetime.now()).days >= 1:  # type: ignore
-            print("Refunding payment")
-            # processRefund(payment)
-        
-        RoutePassenger.objects.filter(route_id=routeId, passenger_id=passengerId).delete()
-    except ValidationError:
-        raise ValidationError("Failed to refund payment", 400)
+    if not route.passengers.filter(id=passengerId).exists():
+        raise ValidationError("User is not in the route", 400)
+    route.passengers.filter(id=passengerId).delete()
