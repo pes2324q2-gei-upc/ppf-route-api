@@ -9,7 +9,6 @@ class CreateRouteSerializer(ModelSerializer):
     class Meta:
         model = Route
         fields = [
-            "driver",
             "originLat",
             "originLon",
             "originAlias",
@@ -20,7 +19,6 @@ class CreateRouteSerializer(ModelSerializer):
             "freeSeats",
             "price",
         ]
-        read_only_fields = ["driver"]
 
 
 class UserSerializer(ModelSerializer):
