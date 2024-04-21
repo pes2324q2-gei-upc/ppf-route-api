@@ -137,7 +137,7 @@ def leaveRoute(routeId: int, passengerId: int):
         payment = Payment.objects.get(user_id=passengerId, route_id=routeId)
         token = Token.objects.get(user_id=passengerId)
 
-        url = "http://localhost:8084/refund/"
+        url = "http://payments-api:8000/refund/"  # TODO: correct the url
         data = {
             "payment_intent_id": payment.paymentIntentId,
         }
