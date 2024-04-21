@@ -21,5 +21,28 @@
                 3
             ]
         }
+    },
+    {
+        "model": "common.route",
+        "pk": 2,
+        "fields": {
+            "driver": "3",
+            "originAlias": "Giesecke + Devrient Mobile Security Iberia S.A.",
+            "originLat": 41.318583,
+            "originLon": 2.129028,
+            "destinationAlias": "Morla de la Valdería",
+            "destinationLat": 41.3893889,
+            "destinationLon": 2.1136111,
+            "departureTime": "2024-12-07T10:00:00Z",
+            "freeSeats": 3,
+            "price": 42.54,
+            "distance": 271823,
+            "duration": 3,
+            "polyline": "seu{FwheLja@km@zBkGXsGs@sHyAqGyBuDaFwBcFCyFpCaEtH_Xn_@eAuKsEaKoKq@qIpODfNlElLlEjDfFp@jDPMdE??yA|LmB`DmBrLSxJzEnFxApFrFVzFPfH_FxBwFlBkDDoJe@sG??MuE",
+            "createdAt": "2024-10-05T10:00:00Z",
+            "passengers": [
+                1, 2
+            ]
+        }
     }
 ]
