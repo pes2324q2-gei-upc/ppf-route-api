@@ -27,7 +27,7 @@ from rest_framework.status import (
     HTTP_400_BAD_REQUEST,
     HTTP_500_INTERNAL_SERVER_ERROR,
 )
-from .service.route import computeMapsRoute, joinRoute, leaveRoute
+from api.service.route import computeMapsRoute, joinRoute, leaveRoute
 
 
 class RouteRetrieveView(RetrieveAPIView):

@@ -5,7 +5,7 @@ from api.views import (
     RoutePreviewView,
     RouteRetrieveView,
 )
-from api.new_views import ListRoutes
+from api.v2.new_views import ListRoutes
 
 from django.urls import path
 
@@ -15,7 +15,7 @@ urlpatterns = [
     path("routes/<int:pk>", RouteRetrieveView.as_view(), name="route-detail"),
     path("routes/<int:pk>/join", RouteJoinView.as_view(), name="route-join"),
     path("routes/<int:pk>/leave", RouteLeaveView.as_view(), name="route-leave"),
-    path("/v2/routes", ListRoutes.as_view(), name="list-routes-v2"),
+    path("v2/routes", ListRoutes.as_view(), name="list-routes-v2"),
 ]
 
 from drf_yasg import openapi

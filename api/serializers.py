@@ -64,12 +64,13 @@ class PreviewRouteSerializer(ModelSerializer):
 
 
 class ListRouteSerializer(ModelSerializer):
-    class PassengerListSerializer(ModelSerializer):
+    class UserListSerializer(ModelSerializer):
         class Meta:
             model = User
-            fields = ["id"]
+            fields = ["id", "username"]
 
-    passengers = PassengerListSerializer(many=True, read_only=True)
+    driver = UserListSerializer(many=False, read_only=True)
+    passengers = UserListSerializer(many=True, read_only=True)
 
     class Meta:
         model = Route
