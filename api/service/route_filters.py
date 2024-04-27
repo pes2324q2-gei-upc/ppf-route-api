@@ -1,10 +1,16 @@
-from curses import meta
+from django.db.models import Q
 from django_filters import FilterSet
 from common.models.route import Route
-from drf_yasg.inspectors import NotHandled
+
+from django_filters import CharFilter
 
 
 class BaseRouteFilter(FilterSet):
+    user = CharFilter(method="userFilter")
+
+    def userFilter(self, queryset, name, value):
+        return queryset.filter(Q(driver__id=value) | Q(passengers__id__in=value))
+
     class Meta:
         model = Route
         fields = {
@@ -12,7 +18,7 @@ class BaseRouteFilter(FilterSet):
             "originLon": ["exact"],
             "destinationLat": ["exact"],
             "destinationLon": ["exact"],
-            "driver": ["exact"],
+            "driver__id": ["exact"],
             "passengers__id": ["in"],
             "freeSeats": ["gte"],
         }

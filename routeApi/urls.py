@@ -5,7 +5,7 @@ from api.views import (
     RoutePreviewView,
     RouteRetrieveView,
 )
-from api.v2.new_views import ListRoutes
+from api.v2.views import ListRoutes
 
 from django.urls import path
 
