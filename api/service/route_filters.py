@@ -13,6 +13,6 @@ class BaseRouteFilter(FilterSet):
             "destinationLat": ["exact"],
             "destinationLon": ["exact"],
             "driver": ["exact"],
-            "passengers": ["contains"],
+            "passengers__id": ["in"],
             "freeSeats": ["gte"],
         }

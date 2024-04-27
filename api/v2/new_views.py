@@ -1,12 +1,15 @@
 from api.serializers import ListRouteSerializer
 from api.service.route_controller import RouteController
 from api.service.route_filters import BaseRouteFilter
-from drf_yasg.openapi import IN_QUERY, TYPE_ARRAY, Parameter
+
 from drf_yasg.utils import swagger_auto_schema
+
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.generics import ListAPIView
-from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.views import APIView
+
+from .schema import listIncludeFilter
 
 routeController = RouteController()  # alias
 
@@ -47,17 +50,7 @@ class ListRoutes(BaseRouteAPIView, ListAPIView):
                 qset = qset | routeManager.finalized()
         return qset
 
-    @swagger_auto_schema(  # TODO refactor to it's own file if multiple manual params are specified
-        manual_parameters=[
-            Parameter(
-                "include",
-                IN_QUERY,
-                description="Stablish if non active routes should be included",
-                items=["cancelled", "finalized"],  # this does not work
-                type=TYPE_ARRAY,
-            )
-        ]
-    )
+    @swagger_auto_schema(manual_parameters=[listIncludeFilter])
     def get(self, request, *args, **kwargs):
         # Filtering and pagination happen at 'view level' (whatever that means)
         return super().get(request, *args, **kwargs)
