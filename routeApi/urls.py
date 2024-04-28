@@ -1,4 +1,5 @@
 from api.views import (
+    RoutePassengersList,
     RouteJoinView,
     RouteLeaveView,
     RouteListCreateView,
@@ -13,6 +14,7 @@ urlpatterns = [
     path("routes/<int:pk>", RouteRetrieveView.as_view(), name="route-detail"),
     path("routes/<int:pk>/join", RouteJoinView.as_view(), name="route-join"),
     path("routes/<int:pk>/leave", RouteLeaveView.as_view(), name="route-leave"),
+    path("routes/<int:pk>/passengers", RoutePassengersList.as_view(), name="route-list-passengers"),
 ]
 
 from django.urls import re_path
