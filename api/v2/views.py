@@ -8,6 +8,7 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
+from rest_framework.filters import OrderingFilter
 
 from .schema import listIncludeFilter
 
@@ -26,6 +27,7 @@ class BaseRouteAPIView(APIView):
 
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
+    ordering = ["id"]
     # renderer classes set by default in settings
 
 
