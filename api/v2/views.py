@@ -38,9 +38,9 @@ class ListRoutes(BaseRouteAPIView, ListAPIView):
     - originLon: Origin point longintude
     - destinationLat: Destination point latitude
     - destinationLon: Destination point longintude
-    - driver__id: The route driver Id.
-    - passengers__id__in: List of user id that are passengers in the route
-    - freeSeats__gte: Minimum number (inclusive) of free seats
+    - driver: The route driver Id.
+    - passengers: List of user id that are passengers in the route
+    - seats: Minimum number (inclusive) of free seats
     - user: The Id of a user that belongs to a routes either as driver or passenger
         - /v2/routes?user=<userId>
     """

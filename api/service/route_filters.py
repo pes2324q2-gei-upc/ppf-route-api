@@ -6,6 +6,7 @@ from django_filters import CharFilter
 
 
 class BaseRouteFilter(FilterSet):
+    # Manually added fields to customize aspect and schema generation
     user = CharFilter(
         method="userFilter",
         label="A user id that belongs to the route, both as passenger or driver",
