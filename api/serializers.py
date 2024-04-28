@@ -9,7 +9,6 @@ class CreateRouteSerializer(ModelSerializer):
     class Meta:
         model = Route
         fields = [
-            "driver",
             "originLat",
             "originLon",
             "originAlias",
@@ -20,7 +19,6 @@ class CreateRouteSerializer(ModelSerializer):
             "freeSeats",
             "price",
         ]
-        read_only_fields = ["driver"]
 
 
 class UserSerializer(ModelSerializer):
@@ -65,12 +63,11 @@ class PreviewRouteSerializer(ModelSerializer):
 
 class ListRouteSerializer(ModelSerializer):
     class UserListSerializer(ModelSerializer):
+      driver = UserListSerializer(many=False, read_only=True)
+      passengers = UserListSerializer(many=True, read_only=True)
         class Meta:
             model = User
             fields = ["id", "username"]
-
-    driver = UserListSerializer(many=False, read_only=True)
-    passengers = UserListSerializer(many=True, read_only=True)
 
     class Meta:
         model = Route
