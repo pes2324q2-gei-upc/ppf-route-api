@@ -1,4 +1,3 @@
-from os import read
 from common.models.route import Route
 from rest_framework.serializers import ModelSerializer
 
@@ -63,8 +62,9 @@ class PreviewRouteSerializer(ModelSerializer):
 
 class ListRouteSerializer(ModelSerializer):
     class UserListSerializer(ModelSerializer):
-      driver = UserListSerializer(many=False, read_only=True)
-      passengers = UserListSerializer(many=True, read_only=True)
+        driver = UserSerializer(many=False, read_only=True)
+        passengers = UserSerializer(many=True, read_only=True)
+
         class Meta:
             model = User
             fields = ["id", "username"]

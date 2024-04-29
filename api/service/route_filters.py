@@ -1,6 +1,7 @@
 from django.db.models import Q
 from django_filters import FilterSet
 from common.models.route import Route
+from rest_framework.pagination import PageNumberPagination
 
 from django_filters import CharFilter
 
@@ -32,3 +33,9 @@ class BaseRouteFilter(FilterSet):
             "destinationLat": ["exact"],
             "destinationLon": ["exact"],
         }
+
+
+class BasePaginator(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = "page_size"
+    max_page_size = 100

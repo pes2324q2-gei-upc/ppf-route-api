@@ -1,6 +1,6 @@
 from api.serializers import ListRouteSerializer
 from api.service.route_controller import RouteController
-from api.service.route_filters import BaseRouteFilter
+from api.service.route_filters import BasePaginator, BaseRouteFilter
 
 from drf_yasg.utils import swagger_auto_schema
 
@@ -27,6 +27,7 @@ class BaseRouteAPIView(APIView):
 
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
+    pagination_class = BasePaginator
     ordering = ["id"]
     # renderer classes set by default in settings
 
