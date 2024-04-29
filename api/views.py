@@ -3,6 +3,7 @@ This module contains the views for the API endpoints related to routes.
 - TODO: See how exceptions are handled by the framework
 """
 
+from typing import Union
 from api.serializers import (
     CreateRouteSerializer,
     DetaliedRouteSerializer,
@@ -28,6 +29,8 @@ from rest_framework.status import (
     HTTP_400_BAD_REQUEST,
     HTTP_500_INTERNAL_SERVER_ERROR,
 )
+
+from common.models.user import Driver
 from .service.route import computeMapsRoute, joinRoute, leaveRoute
 
 
@@ -91,6 +94,9 @@ class RouteListCreateView(ListCreateAPIView):
             return CreateRouteSerializer
         return ListRouteSerializer
 
+    def get_serializer(self, *args, **kwargs) -> Union[CreateRouteSerializer, ListRouteSerializer]:
+        return super().get_serializer(*args, **kwargs)
+
     @swagger_auto_schema(
         responses={
             201: openapi.Response("Route created", DetaliedRouteSerializer),
@@ -98,6 +104,7 @@ class RouteListCreateView(ListCreateAPIView):
     )
     def post(self, request: Request, *args, **kargs):
         # TODO search for a cached route to not duplicate the route request to maps api
+        driver = Driver.objects.get(id=request.user.id)
 
         serializer: CreateRouteSerializer = self.get_serializer(
             data={**request.data, "driver": request.user.id}  # type: ignore
@@ -107,17 +114,9 @@ class RouteListCreateView(ListCreateAPIView):
 
         # Transform the recieved data into a format that the Google Maps API can understand and send the request
         mapsResponseData = computeMapsRoute(serializer)
+        serializer.save(**{**mapsResponseData, "driver_id": request.user.id})
 
-        # We need both the data from google maps and the data from the original request to create the route
-        completeSerializer = DetaliedRouteSerializer(
-            data={**serializer.data, **mapsResponseData, "driver": request.user.id}
-        )
-        print(completeSerializer)
-
-        if not completeSerializer.is_valid(raise_exception=True):
-            return Response(status=HTTP_500_INTERNAL_SERVER_ERROR)
-        completeSerializer.save()
-        return Response(completeSerializer.data, status=HTTP_201_CREATED)
+        return Response(serializer.data, status=HTTP_201_CREATED)
 
 
 class RouteJoinView(CreateAPIView):
