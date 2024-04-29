@@ -4,11 +4,6 @@ from rest_framework.serializers import ModelSerializer
 
 from common.models.user import User
 
-class SimpleUserSerialzier(ModelSerializer):
-    class Meta:
-        model = User
-        fields = ["id", "username"]
-
 
 class CreateRouteSerializer(ModelSerializer):
     class Meta:
