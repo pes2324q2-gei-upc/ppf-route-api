@@ -4,6 +4,7 @@ from api.views import (
     RouteListCreateView,
     RoutePreviewView,
     RouteRetrieveView,
+    RouteValidateJoinView,
 )
 from django.urls import path
 
@@ -11,6 +12,9 @@ urlpatterns = [
     path("routes", RouteListCreateView.as_view(), name="route-list-create"),
     path("routes/preview", RoutePreviewView.as_view(), name="route-list-create"),
     path("routes/<int:pk>", RouteRetrieveView.as_view(), name="route-detail"),
+    path(
+        "routes/<int:pk>/validate_join", RouteValidateJoinView.as_view(), name="route-validate-join"
+    ),
     path("routes/<int:pk>/join", RouteJoinView.as_view(), name="route-join"),
     path("routes/<int:pk>/leave", RouteLeaveView.as_view(), name="route-leave"),
 ]

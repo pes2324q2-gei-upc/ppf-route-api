@@ -9,6 +9,7 @@ from api.serializers import (
     DetaliedRouteSerializer,
     ListRouteSerializer,
     PreviewRouteSerializer,
+    PaymentMethodSerializer,
 )
 from common.models.route import Route
 from drf_yasg import openapi
@@ -30,7 +31,7 @@ from rest_framework.status import (
 )
 
 from common.models.user import Driver
-from .service.route import computeMapsRoute, joinRoute, leaveRoute
+from .service.route import computeMapsRoute, joinRoute, leaveRoute, validateJoinRoute
 
 
 class RouteRetrieveView(RetrieveAPIView):
@@ -118,11 +119,11 @@ class RouteListCreateView(ListCreateAPIView):
         return Response(serializer.data, status=HTTP_201_CREATED)
 
 
-class RouteJoinView(CreateAPIView):
+class RouteValidateJoinView(CreateAPIView):
     """
-    Join a route
+    Validate if a user can join a route
     URI:
-    - POST /routes/{id}/join
+    - POST /routes/{id}/validate_join
     """
 
     authentication_classes = [TokenAuthentication]
@@ -131,8 +132,30 @@ class RouteJoinView(CreateAPIView):
     def post(self, request, *args, **kwargs):
         routeId = self.kwargs["pk"]
         userId = request.user.id
-        joinRoute(routeId, userId)
-        return Response(status=HTTP_200_OK)
+        validateJoinRoute(routeId, userId)
+        return Response(
+            {"message": "User successfully validated to join the route"}, status=HTTP_200_OK
+        )
+
+
+class RouteJoinView(CreateAPIView):
+    """
+    Join a route
+    URI:
+    - POST /routes/{id}/join
+    """
+
+    serializer_class = PaymentMethodSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        paymentMethodId = request.data.get("payment_method_id")
+        routeId = self.kwargs["pk"]
+        userId = request.user.id
+        validateJoinRoute(routeId, userId)
+        joinRoute(routeId, userId, paymentMethodId)
+        return Response({"message": "User successfully joined the route"}, status=HTTP_200_OK)
 
 
 class RouteLeaveView(CreateAPIView):
@@ -149,7 +172,7 @@ class RouteLeaveView(CreateAPIView):
         routeId = self.kwargs["pk"]
         userId = request.user.id
         leaveRoute(routeId, userId)
-        return Response(status=HTTP_200_OK)
+        return Response({"message": "User successfully left the route"}, status=HTTP_200_OK)
 
 
 class RouteCancellView(CreateAPIView):

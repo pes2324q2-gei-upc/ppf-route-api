@@ -91,9 +91,9 @@ def computeMapsRoute(serializer: Union[PreviewRouteSerializer, CreateRouteSerial
     return deserializeMapsRoutesResponse(response)
 
 
-def joinRoute(routeId: int, passengerId: int):
+def validateJoinRoute(routeId: int, passengerId: int):
     """
-    Joins a user to a route.
+    Validates if a user can join a route.
 
     Args:
         route_id (int): The ID of the route.
@@ -116,13 +116,22 @@ def joinRoute(routeId: int, passengerId: int):
             raise ValidationError(
                 "User is already in a route that overlaps with the current route", 400
             )
-    # TODO: enable when frontend payment is implemented
+
+
+def joinRoute(routeId: int, passengerId: int, paymentMethodId: str):
     """
+    Joins a user to a route after payment is successfull.
+
+    Args:
+        route_id (int): The ID of the route.
+        user_id (int): The ID of the user.
+    """
+    route = Route.objects.get(id=routeId)
     token = Token.objects.get(user_id=passengerId)
 
     url = "http://payments-api:8000/process_payment/"  # TODO: correct the url
     data = {
-        "payment_method_id": "pm_1P8OY0KT1SFkcH9NEpx1hiyd",  # TODO: add the return value of the payment method id from the frontend,
+        "payment_method_id": paymentMethodId,
         "route_id": routeId,
     }
     headers = {"Content-Type": "application/json", "Authorization": "Token " + token.key}
@@ -130,7 +139,7 @@ def joinRoute(routeId: int, passengerId: int):
 
     if response.status_code != 200:
         raise ValidationError("Payment failed and user did not join the route", 400)
-    """
+
     passenger = User.objects.get(id=passengerId)
     route.passengers.add(passenger)
 
@@ -146,23 +155,19 @@ def leaveRoute(routeId: int, passengerId: int):
     route = Route.objects.get(id=routeId)
     if not route.passengers.filter(id=passengerId).exists():
         raise ValidationError("User is not in the route", 400)
-    
-    # TODO: enable when frontend payment is implemented
-    """
+
     # Only refund if more than 24 hours before the departure time
     if (route.departureTime - timezone.now()).days >= 1:
-        payment = Payment.objects.get(user_id=passengerId, route_id=routeId, isRefunded=False)
         token = Token.objects.get(user_id=passengerId)
 
         url = "http://payments-api:8000/refund/"  # TODO: correct the url
         data = {
-            "payment_intent_id": payment.paymentIntentId,
+            "route_id": routeId,
         }
         headers = {"Content-Type": "application/json", "Authorization": "Token " + token.key}
         response = requests.post(url, data=json.dumps(data), headers=headers)
 
         if response.status_code != 200:
             raise ValidationError("Refund failed and User did not leave the route", 400)
-    """
-    
+
     route.passengers.remove(User.objects.get(id=passengerId))

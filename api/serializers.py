@@ -1,6 +1,7 @@
 from os import read
 from common.models.route import Route
 from rest_framework.serializers import ModelSerializer
+from rest_framework import serializers
 
 from common.models.user import User
 
@@ -109,3 +110,6 @@ class ListRouteSerializer(ModelSerializer):
 # "cancelled"
 # "finalized"
 # "createdAt"
+
+class PaymentMethodSerializer(serializers.Serializer):
+    payment_method_id = serializers.CharField()
