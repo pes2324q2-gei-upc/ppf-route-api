@@ -8,7 +8,7 @@ from api.serializers import (
     DetaliedRouteSerializer,
     ListRouteSerializer,
     PreviewRouteSerializer,
-    PassengerListSerializer,
+    SimpleUserSerialzier,
 )
 from common.models.route import Route
 from drf_yasg import openapi
@@ -174,7 +174,7 @@ class RoutePassengersList(RetrieveAPIView):
     - GET /routes/{id}/passengers
     """
 
-    serializer_class = PassengerListSerializer
+    serializer_class = SimpleUserSerialzier
 
     def get(self, request, *args, **kwargs):
         route_id = self.kwargs["pk"]
