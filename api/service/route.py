@@ -33,16 +33,16 @@ def buildMapsRouteRequest(
         "origin": {
             "location": {
                 "lat_lng": {
-                    "latitude": serializer.data.get("originLat"),
-                    "longitude": serializer.data.get("originLon"),
+                    "latitude": serializer.validated_data.get("originLat"),  # type: ignore
+                    "longitude": serializer.validated_data.get("originLon"),  # type: ignore
                 }
             }
         },
         "destination": {
             "location": {
                 "lat_lng": {
-                    "latitude": serializer.data.get("destinationLat"),
-                    "longitude": serializer.data.get("destinationLon"),
+                    "latitude": serializer.validated_data.get("destinationLat"),  # type: ignore
+                    "longitude": serializer.validated_data.get("destinationLon"),  # type: ignore
                 }
             }
         },
