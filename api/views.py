@@ -174,6 +174,8 @@ class RoutePassengersList(RetrieveAPIView):
     """
 
     serializer_class = UserSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
         route_id = self.kwargs["pk"]
