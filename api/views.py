@@ -28,6 +28,7 @@ from rest_framework.status import (
     HTTP_500_INTERNAL_SERVER_ERROR,
 )
 from .service.route import computeMapsRoute, joinRoute, leaveRoute
+from common.models.charger import ChargerLocationType, ChargerVelocity, ChargerLocationType
 
 
 class RouteRetrieveView(RetrieveAPIView):
@@ -56,7 +57,8 @@ class RoutePreviewView(CreateAPIView):
     serializer_class = PreviewRouteSerializer
 
     def post(self, request: Request, *args, **kargs):
-        serializer = self.get_serializer(data={"driver": request.user.id, **request.data})  # type: ignore
+        serializer = self.get_serializer(
+            data={"driver": request.user.id, **request.data})  # type: ignore
 
         if not serializer.is_valid(raise_exception=True):
             return Response(status=HTTP_400_BAD_REQUEST)
@@ -109,7 +111,8 @@ class RouteListCreateView(ListCreateAPIView):
 
         # We need both the data from google maps and the data from the original request to create the route
         completeSerializer = DetaliedRouteSerializer(
-            data={**serializer.data, **mapsResponseData, "driver": request.user.id}
+            data={**serializer.data, **mapsResponseData,
+                  "driver": request.user.id}
         )
         print(completeSerializer)
 

@@ -28,10 +28,13 @@ class Command(BaseCommand):
             # Add connection types
             connection_types = item['tipus_connexi'].split('+')
             for connection_type in connection_types:
-                charger_type = ChargerLocationType.objects.get(
-                    type=connection_type.strip()
+                if connection_type == "MENNEKES.M":
+                    connection_type = "MENNEKES"
+                print(connection_type)
+                charger_type = ChargerLocationType.objects.get_or_create(
+                    chargerType=connection_type
                 )
-                charger.connectionType.add(charger_type)
+                charger.connectionType.add(charger_type[0])
 
             # Add velocities
             velocities = item['tipus_velocitat'].split(' i ')
