@@ -39,10 +39,15 @@ class Command(BaseCommand):
             # Add velocities
             velocities = item['tipus_velocitat'].split(' i ')
             for velocity in velocities:
-                charger_velocity = ChargerVelocity.objects.get(
-                    velocity=velocity
-                )
-                charger.velocities.add(charger_velocity)
+                try:
+                    charger_velocity = ChargerVelocity.objects.get(
+                        velocity=velocity.split()
+                    )
+                    charger.velocities.add(
+                        "THIS ONE DID NOT WORK", charger_velocity)
+
+                except ChargerVelocity.DoesNotExist:
+                    print(velocity)
 
     def clear_data(self):
         LocationCharger.objects.all().delete()
