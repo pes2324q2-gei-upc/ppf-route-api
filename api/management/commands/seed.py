@@ -41,13 +41,12 @@ class Command(BaseCommand):
             for velocity in velocities:
                 try:
                     charger_velocity = ChargerVelocity.objects.get(
-                        velocity=velocity.split()
+                        velocity=velocity.strip()
                     )
-                    charger.velocities.add(
-                        "THIS ONE DID NOT WORK", charger_velocity)
+                    charger.velocities.add(charger_velocity)
 
                 except ChargerVelocity.DoesNotExist:
-                    print(velocity)
+                    print("THIS ONE DID NOT WORK", velocity)
 
     def clear_data(self):
         LocationCharger.objects.all().delete()
