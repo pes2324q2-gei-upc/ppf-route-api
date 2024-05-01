@@ -1,4 +1,3 @@
-from math import e
 import requests
 from django.core.management.base import BaseCommand
 from common.models.charger import LocationCharger, ChargerVelocity, ChargerLocationType
