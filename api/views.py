@@ -29,7 +29,6 @@ from rest_framework.status import (
     HTTP_201_CREATED,
     HTTP_400_BAD_REQUEST,
 )
-
 from common.models.user import Driver
 from .service.route import computeMapsRoute, joinRoute, leaveRoute
 
