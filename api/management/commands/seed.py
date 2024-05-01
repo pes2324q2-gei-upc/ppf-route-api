@@ -1,15 +1,31 @@
+from math import e
 import requests
 from django.core.management.base import BaseCommand
 from common.models.charger import LocationCharger, ChargerVelocity, ChargerLocationType
-import re
+import logging
+import os
 
 
 class Command(BaseCommand):
     help = 'Populates the database with charger data from the API'
+    path = "api/logs"
+    if not os.path.exists(path):
+        os.makedirs(path)
 
     def handle(self, *args, **options):
-        response = requests.get(
-            'https://analisi.transparenciacatalunya.cat/resource/tb2m-m33b.json?$limit=2000')
+        logger = logging.getLogger(__name__)
+
+        try:
+            response = requests.get(
+                'https://analisi.transparenciacatalunya.cat/resource/tb2m-m33b.json?$limit=50000')
+        except Exception as error:
+            logging.basicConfig(filename='api/logs/db_logs.log',
+                                encoding='utf-8', level=logging.ERROR)
+            logger.error(error)
+            self.stdout.write(self.style.ERROR(
+                "Error while trying to fetch data from the API"))
+            return
+
         data = response.json()
 
         accepted_types = ['MENNEKES', 'SCHUKO',
@@ -34,11 +50,18 @@ class Command(BaseCommand):
             for accepted_type in accepted_types:
                 if accepted_type in connection_types:
                     connection_type = accepted_type
-                    print(connection_type)
-                    charger_type = ChargerLocationType.objects.get_or_create(
-                        chargerType=connection_type
-                    )
-                    charger.connectionType.add(charger_type[0])
+                    try:
+                        charger_type = ChargerLocationType.objects.get(
+                            chargerType=connection_type
+                        )
+                        charger.connectionType.add(charger_type)
+
+                    except Exception as error:
+                        logging.basicConfig(filename='api/logs/db_logs.log',
+                                            encoding='utf-8', level=logging.WARNING)
+                        logger.warning(error)
+                        self.stdout.write(self.style.WARNING(
+                            "Error while trying to add connection type"))
 
             # Add velocities
             velocities = item['tipus_velocitat'].split(' i ')
@@ -49,8 +72,21 @@ class Command(BaseCommand):
                     )
                     charger.velocities.add(charger_velocity)
 
-                except ChargerVelocity.DoesNotExist:
-                    print("THIS ONE DID NOT WORK", velocity)
+                except Exception as error:
+                    logging.basicConfig(filename='api/logs/db_logs.log',
+                                        encoding='utf-8', level=logging.WARNING)
+                    logger.warning(error)
+                    self.stdout.write(self.style.WARNING(
+                        "Error while trying to add velocity"))
+
+        self.stdout.write(self.style.SUCCESS('Data seeded successfully'))
 
     def clear_data(self):
-        LocationCharger.objects.all().delete()
+        try:
+            LocationCharger.objects.all().delete()
+        except:
+            logger = logging.getLogger(__name__)
+            logging.basicConfig(filename='api/logs/db_logs.log',
+                                encoding='utf-8', level=logging.ERROR)
+            logger.error('Error while trying to delete data from the database')
+            return
