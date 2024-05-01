@@ -13,6 +13,8 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         logger = logging.getLogger(__name__)
+        self.stdout.write(self.style.NOTICE(
+            "Populating database with charger data..."))
 
         try:
             response = requests.get(

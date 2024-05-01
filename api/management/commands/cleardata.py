@@ -7,5 +7,6 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         seed_command = SeedCommand()
+        self.stdout.write(self.style.NOTICE("Clearing data..."))
         seed_command.clear_data()
         self.stdout.write(self.style.SUCCESS('Data cleared successfully'))
