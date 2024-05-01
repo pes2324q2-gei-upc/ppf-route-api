@@ -30,6 +30,9 @@ from rest_framework.status import (
 )
 from common.models.user import Driver
 from .service.route import computeMapsRoute, joinRoute, leaveRoute
+# Don't delete, needed to create db with models
+from common.models.charger import ChargerLocationType, ChargerVelocity, ChargerLocationType
+
 
 class RouteRetrieveView(RetrieveAPIView):
     """
@@ -57,7 +60,8 @@ class RoutePreviewView(CreateAPIView):
     serializer_class = PreviewRouteSerializer
 
     def post(self, request: Request, *args, **kargs):
-        serializer = self.get_serializer(data={"driver": request.user.id, **request.data})  # type: ignore
+        serializer = self.get_serializer(
+            data={"driver": request.user.id, **request.data})  # type: ignore
 
         if not serializer.is_valid(raise_exception=True):
             return Response(status=HTTP_400_BAD_REQUEST)
