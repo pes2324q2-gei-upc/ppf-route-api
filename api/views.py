@@ -29,10 +29,8 @@ from rest_framework.status import (
     HTTP_400_BAD_REQUEST,
     HTTP_500_INTERNAL_SERVER_ERROR,
 )
-
 from common.models.user import Driver
 from .service.route import computeMapsRoute, joinRoute, leaveRoute, validateJoinRoute
-
 
 class RouteRetrieveView(RetrieveAPIView):
     """
