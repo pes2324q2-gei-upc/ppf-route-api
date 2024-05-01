@@ -1,10 +1,9 @@
 from os import read
 from common.models.route import Route
 from rest_framework.serializers import ModelSerializer
-from rest_framework.fields import SerializerMethodField
 
 from common.models.user import User
-from common.models.charger import LocationCharger
+from common.models.charger import LocationCharger, ChargerLocationType, ChargerVelocity
 
 
 class CreateRouteSerializer(ModelSerializer):
@@ -113,12 +112,32 @@ class ListRouteSerializer(ModelSerializer):
 # "createdAt"
 
 
+class ChargerVelocitySerializer(ModelSerializer):
+    class Meta:
+        model = ChargerVelocity
+        fields = ["velocity"]
+
+
+class ConnectionTypeSerializer(ModelSerializer):
+    class Meta:
+        model = ChargerLocationType
+        fields = ["chargerType"]
+
+
 class LocationChargerSerializer(ModelSerializer):
-    # distancia = SerializerMethodField()
+    connectionType = ConnectionTypeSerializer(many=True)
+    velocities = ChargerVelocitySerializer(many=True)
 
     class Meta:
         model = LocationCharger
-        fields = "__all__"
-
-    """def get_distancia(self, obj):
-        return getattr(obj, "distancia", None)"""
+        fields = [
+            "promotorGestor",
+            "access",
+            "connectionType",
+            "kw",
+            "acDc",
+            "velocities",
+            "latitud",
+            "longitud",
+            "adreA",
+        ]
