@@ -9,6 +9,7 @@ from api.serializers import (
     DetaliedRouteSerializer,
     ListRouteSerializer,
     PreviewRouteSerializer,
+    LocationChargerSerializer,
 )
 from common.models.route import Route
 from drf_yasg import openapi
@@ -18,6 +19,7 @@ from rest_framework.generics import (
     CreateAPIView,
     ListCreateAPIView,
     RetrieveAPIView,
+    ListAPIView,
 )
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
@@ -26,11 +28,13 @@ from rest_framework.status import (
     HTTP_200_OK,
     HTTP_201_CREATED,
     HTTP_400_BAD_REQUEST,
-    HTTP_500_INTERNAL_SERVER_ERROR,
 )
 
 from common.models.user import Driver
 from .service.route import computeMapsRoute, joinRoute, leaveRoute
+
+
+from common.models.charger import LocationCharger
 
 
 class RouteRetrieveView(RetrieveAPIView):
@@ -163,3 +167,58 @@ class RouteCancellView(CreateAPIView):
     permission_classes = [IsAuthenticated]
 
     queryset = Route.objects.all()
+
+
+from math import radians, cos, sin, sqrt, atan2
+
+
+class NearbyChargersView(ListAPIView):
+    """
+    Get the chargers around a latitude and longitude point with a radius
+    URI:
+    - GET /nearby-chargers?latitud=0&longitud=0&radio=0
+    """
+
+    serializer_class = LocationChargerSerializer
+
+    def get_queryset(self):
+        latitud = float(self.request.query_params.get("latitud"))  # type: ignore
+        longitud = float(self.request.query_params.get("longitud"))  # type: ignore
+        radio = float(self.request.query_params.get("radio")) * 1000  # type: ignore    # Change to meters
+
+        """
+        central_point = Point(longitud, latitud, srid=4326)
+        central_point.transform(25831)
+
+        # Calculate the distance between the point and the chargers in the database (more
+        # efficient than calculating it in the code)
+        queryset = LocationCharger.objects.annotate(
+            transform_point=Transform(Point(F("longitud"), F("latitud"), srid=4326), 25831),
+            distancia=Distance("transform_point", central_point),
+        ).filter(distancia__lte=radio)
+
+        return queryset"""
+
+        if latitud and longitud and radio:
+            queryset = LocationCharger.objects.all()
+            cargadores_cercanos = []
+
+            for cargador in queryset:
+                # Convertir a radianes
+                lat1, lon1, lat2, lon2 = map(
+                    radians, [latitud, longitud, cargador.latitud, cargador.longitud]
+                )
+
+                # Fórmula del haversine
+                dlon = lon2 - lon1
+                dlat = lat2 - lat1
+                a = sin(dlat / 2) ** 2 + cos(lat1) * cos(lat2) * sin(dlon / 2) ** 2
+                c = 2 * atan2(sqrt(a), sqrt(1 - a))
+                distancia = 6371 * c  # Radio de la Tierra en km
+
+                if distancia <= radio:
+                    cargadores_cercanos.append(cargador)
+
+            return cargadores_cercanos
+
+        return LocationCharger.objects.none()

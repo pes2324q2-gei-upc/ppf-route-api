@@ -1,8 +1,10 @@
 from os import read
 from common.models.route import Route
 from rest_framework.serializers import ModelSerializer
+from rest_framework.fields import SerializerMethodField
 
 from common.models.user import User
+from common.models.charger import LocationCharger
 
 
 class CreateRouteSerializer(ModelSerializer):
@@ -109,3 +111,14 @@ class ListRouteSerializer(ModelSerializer):
 # "cancelled"
 # "finalized"
 # "createdAt"
+
+
+class LocationChargerSerializer(ModelSerializer):
+    # distancia = SerializerMethodField()
+
+    class Meta:
+        model = LocationCharger
+        fields = "__all__"
+
+    """def get_distancia(self, obj):
+        return getattr(obj, "distancia", None)"""
