@@ -30,6 +30,7 @@ from rest_framework.status import (
 )
 from common.models.user import Driver
 from .service.route import computeMapsRoute, joinRoute, leaveRoute
+# Don't delete, needed to create db with models
 from common.models.charger import ChargerLocationType, ChargerVelocity, ChargerLocationType
 
 
