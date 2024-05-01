@@ -1,6 +1,7 @@
 import requests
 from django.core.management.base import BaseCommand
 from common.models.charger import LocationCharger, ChargerVelocity, ChargerLocationType
+import re
 
 
 class Command(BaseCommand):
@@ -8,8 +9,11 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         response = requests.get(
-            'https://analisi.transparenciacatalunya.cat/resource/tb2m-m33b.json')
+            'https://analisi.transparenciacatalunya.cat/resource/tb2m-m33b.json?$limit=2000')
         data = response.json()
+
+        accepted_types = ['MENNEKES', 'SCHUKO',
+                          'TESLA', 'CHADEMO', 'CCS COMBO2']
 
         for item in data:
 
@@ -26,15 +30,15 @@ class Command(BaseCommand):
             charger.save()
 
             # Add connection types
-            connection_types = item['tipus_connexi'].split('+')
-            for connection_type in connection_types:
-                if connection_type == "MENNEKES.M":
-                    connection_type = "MENNEKES"
-                print(connection_type)
-                charger_type = ChargerLocationType.objects.get_or_create(
-                    chargerType=connection_type
-                )
-                charger.connectionType.add(charger_type[0])
+            connection_types = item['tipus_connexi'].upper()
+            for accepted_type in accepted_types:
+                if accepted_type in connection_types:
+                    connection_type = accepted_type
+                    print(connection_type)
+                    charger_type = ChargerLocationType.objects.get_or_create(
+                        chargerType=connection_type
+                    )
+                    charger.connectionType.add(charger_type[0])
 
             # Add velocities
             velocities = item['tipus_velocitat'].split(' i ')

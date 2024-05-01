@@ -73,28 +73,28 @@
         "model": "common.ChargerLocationType",
         "pk": 2,
         "fields": {
-            "chargerType": "Tesla"
+            "chargerType": "TESLA"
         }
     },
     {
         "model": "common.ChargerLocationType",
         "pk": 3,
         "fields": {
-            "chargerType": "Schuko"
+            "chargerType": "SCHUKO"
         }
     },
     {
         "model": "common.ChargerLocationType",
         "pk": 4,
         "fields": {
-            "chargerType": "ChadeMO"
+            "chargerType": "CHADEMO"
         }
     },
     {
         "model": "common.ChargerLocationType",
         "pk": 5,
         "fields": {
-            "chargerType": "CCS Combo2"
+            "chargerType": "CCS COMBO2"
         }
     }
 ]
