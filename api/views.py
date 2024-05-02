@@ -179,7 +179,7 @@ class NearbyChargersView(ListAPIView):
     For more computing precision:
         See GDAL library, django.contrib.gis.geos, django.contrib.gis.db.models.functions
     URI:
-    - GET /nearby-chargers?latitud=&longitud=&radio_km=
+    - GET /chargers?latitud=&longitud=&radio_km=
     """
 
     serializer_class = LocationChargerSerializer
