@@ -1,4 +1,3 @@
-from os import read
 from common.models.route import Route
 from rest_framework.serializers import ModelSerializer
 
@@ -9,7 +8,6 @@ class CreateRouteSerializer(ModelSerializer):
     class Meta:
         model = Route
         fields = [
-            "driver",
             "originLat",
             "originLon",
             "originAlias",
@@ -20,7 +18,6 @@ class CreateRouteSerializer(ModelSerializer):
             "freeSeats",
             "price",
         ]
-        read_only_fields = ["driver"]
 
 
 class UserSerializer(ModelSerializer):
@@ -64,12 +61,13 @@ class PreviewRouteSerializer(ModelSerializer):
 
 
 class ListRouteSerializer(ModelSerializer):
-    class PassengerListSerializer(ModelSerializer):
+    class UserListSerializer(ModelSerializer):
         class Meta:
             model = User
-            fields = ["id"]
+            fields = ["id", "username"]
 
-    passengers = PassengerListSerializer(many=True, read_only=True)
+    driver = UserListSerializer(many=False, read_only=True)
+    passengers = UserListSerializer(many=True, read_only=True)
 
     class Meta:
         model = Route
