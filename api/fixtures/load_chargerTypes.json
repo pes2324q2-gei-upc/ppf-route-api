@@ -1,9 +1,37 @@
 [
     {
+        "model": "common.chargervelocity",
+        "pk": 1,
+        "fields": {
+            "velocity": "NORMAL"
+        }
+    },
+    {
+        "model": "common.chargervelocity",
+        "pk": 2,
+        "fields": {
+            "velocity": "semiRAPID"
+        }
+    },
+    {
+        "model": "common.chargervelocity",
+        "pk": 3,
+        "fields": {
+            "velocity": "RAPID"
+        }
+    },
+    {
+        "model": "common.chargervelocity",
+        "pk": 4,
+        "fields": {
+            "velocity": "superRAPID"
+        }
+    },
+    {
         "model": "common.chargertype",
         "pk": 1,
         "fields": {
-            "chargerType": "Mennekes"
+            "chargerType": "MENNEKES"
         }
     },
     {
@@ -31,7 +59,42 @@
         "model": "common.chargertype",
         "pk": 5,
         "fields": {
-            "chargerType": "CSS Combo2"
+            "chargerType": "CCS Combo2"
+        }
+    },
+    {
+        "model": "common.ChargerLocationType",
+        "pk": 1,
+        "fields": {
+            "chargerType": "MENNEKES"
+        }
+    },
+    {
+        "model": "common.ChargerLocationType",
+        "pk": 2,
+        "fields": {
+            "chargerType": "TESLA"
+        }
+    },
+    {
+        "model": "common.ChargerLocationType",
+        "pk": 3,
+        "fields": {
+            "chargerType": "SCHUKO"
+        }
+    },
+    {
+        "model": "common.ChargerLocationType",
+        "pk": 4,
+        "fields": {
+            "chargerType": "CHADEMO"
+        }
+    },
+    {
+        "model": "common.ChargerLocationType",
+        "pk": 5,
+        "fields": {
+            "chargerType": "CCS COMBO2"
         }
     }
 ]
