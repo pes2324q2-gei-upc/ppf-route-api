@@ -8,6 +8,7 @@ from api import GoogleMapsRouteClient
 from api.serializers import CreateRouteSerializer, PreviewRouteSerializer
 from common.models.route import Route
 from common.models.user import User
+from common.models.valuation import Valuation # Dont remove, it is use for migrate well
 from google.maps.routing_v2 import ComputeRoutesRequest, ComputeRoutesResponse
 from google.maps.routing_v2 import Route as GRoute
 from rest_framework.exceptions import ValidationError

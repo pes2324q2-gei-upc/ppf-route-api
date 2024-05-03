@@ -93,6 +93,15 @@
         }
     },
     {
+        "model": "authtoken.token",
+        "pk": 2,
+        "fields": {
+            "user_id": 1,
+            "key": "e65b642f8292afcdc736b9d3e643aaf1301d47al",
+            "created": "2024-05-09 18:51:41.789429"
+        }
+    },
+    {
         "model": "common.preference",
         "pk": 1,
         "fields": {
