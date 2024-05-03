@@ -11,6 +11,7 @@ from api.serializers import (
     PreviewRouteSerializer,
     LocationChargerSerializer,
     PaymentMethodSerializer,
+    UserSerializer,
 )
 from common.models.route import Route
 from drf_yasg import openapi
@@ -253,3 +254,22 @@ class NearbyChargersView(ListAPIView):
                 cargadores_cercanos.append(cargador)
 
         return cargadores_cercanos
+
+
+class RoutePassengersList(RetrieveAPIView):
+    """
+    Get the passengers of a route
+    URI:
+    - GET /routes/{id}/passengers
+    """
+
+    serializer_class = UserSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        route_id = self.kwargs["pk"]
+        route = Route.objects.get(id=route_id)
+        passengers = route.passengers.all()
+        serializer = self.get_serializer(passengers, many=True)
+        return Response(serializer.data)

@@ -1,4 +1,5 @@
 from api.views import (
+    RoutePassengersList,
     RouteJoinView,
     RouteLeaveView,
     RouteListCreateView,
@@ -21,6 +22,7 @@ urlpatterns = [
     path("routes/<int:pk>/join", RouteJoinView.as_view(), name="route-join"),
     path("routes/<int:pk>/leave", RouteLeaveView.as_view(), name="route-leave"),
     path("v2/routes", ListRoutes.as_view(), name="list-routes-v2"),
+    path("routes/<int:pk>/passengers", RoutePassengersList.as_view(), name="route-list-passengers"),
 ]
 
 from drf_yasg import openapi
