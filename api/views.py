@@ -9,6 +9,7 @@ from api.serializers import (
     DetaliedRouteSerializer,
     ListRouteSerializer,
     PreviewRouteSerializer,
+    LocationChargerSerializer,
     PaymentMethodSerializer,
 )
 from common.models.route import Route
@@ -19,6 +20,7 @@ from rest_framework.generics import (
     CreateAPIView,
     ListCreateAPIView,
     RetrieveAPIView,
+    ListAPIView,
 )
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
@@ -27,10 +29,16 @@ from rest_framework.status import (
     HTTP_200_OK,
     HTTP_201_CREATED,
     HTTP_400_BAD_REQUEST,
-    HTTP_500_INTERNAL_SERVER_ERROR,
 )
 from common.models.user import Driver
 from .service.route import computeMapsRoute, joinRoute, leaveRoute, validateJoinRoute
+# Don't delete, needed to create db with models
+from common.models.charger import ChargerLocationType, ChargerVelocity, ChargerLocationType
+
+
+from math import radians, cos, sin, sqrt, atan2
+from common.models.charger import LocationCharger
+
 
 class RouteRetrieveView(RetrieveAPIView):
     """
@@ -58,7 +66,8 @@ class RoutePreviewView(CreateAPIView):
     serializer_class = PreviewRouteSerializer
 
     def post(self, request: Request, *args, **kargs):
-        serializer = self.get_serializer(data={"driver": request.user.id, **request.data})  # type: ignore
+        serializer = self.get_serializer(
+            data={"driver": request.user.id, **request.data})  # type: ignore
 
         if not serializer.is_valid(raise_exception=True):
             return Response(status=HTTP_400_BAD_REQUEST)
@@ -184,3 +193,63 @@ class RouteCancellView(CreateAPIView):
     permission_classes = [IsAuthenticated]
 
     queryset = Route.objects.all()
+
+
+class NearbyChargersView(ListAPIView):
+    """
+    Get the chargers around a latitude and longitude point with a radius
+    Formula used to compute the distance between two points: Haversine formula
+    For more computing precision:
+        See GDAL library, django.contrib.gis.geos, django.contrib.gis.db.models.functions
+    URI:
+    - GET /chargers?latitud=&longitud=&radio_km=
+    """
+
+    serializer_class = LocationChargerSerializer
+
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter("latitud", openapi.IN_QUERY, type=openapi.TYPE_NUMBER),
+            openapi.Parameter("longitud", openapi.IN_QUERY, type=openapi.TYPE_NUMBER),
+            openapi.Parameter("radio_km", openapi.IN_QUERY, type=openapi.TYPE_NUMBER),
+        ]
+    )
+    def get(self, request, *args, **kwargs):
+
+        latitud = request.query_params.get("latitud", None)
+        longitud = request.query_params.get("longitud", None)
+        radio = request.query_params.get("radio_km", None)
+
+        if not all([latitud, longitud, radio]):
+            return Response(
+                {"error": "Missing parameters: latitud, longitud or radio_km"},
+                status=HTTP_400_BAD_REQUEST,
+            )
+
+        return super().get(request, *args, **kwargs)
+
+    def get_queryset(self):
+        # get_queryset is called just if three parameters are provided
+        latitud = float(self.request.query_params.get("latitud"))  # type: ignore
+        longitud = float(self.request.query_params.get("longitud"))  # type: ignore
+        radio = float(self.request.query_params.get("radio_km"))  # type: ignore
+
+        queryset = LocationCharger.objects.all()
+        cargadores_cercanos = []
+
+        for cargador in queryset:
+            # Apply the haversine formula to calculate the distance between two points
+            lat1, lon1, lat2, lon2 = map(
+                radians, [latitud, longitud, cargador.latitud, cargador.longitud]
+            )
+            dlon = lon2 - lon1
+            dlat = lat2 - lat1
+            a = sin(dlat / 2) ** 2 + cos(lat1) * cos(lat2) * sin(dlon / 2) ** 2
+            c = 2 * atan2(sqrt(a), sqrt(1 - a))
+            distancia = 6371 * c  # Radio of the Earth in km
+
+            # If the charger is within the radius, add it to the list
+            if distancia <= radio:
+                cargadores_cercanos.append(cargador)
+
+        return cargadores_cercanos
