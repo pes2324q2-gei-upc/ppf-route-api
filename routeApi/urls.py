@@ -5,6 +5,8 @@ from api.views import (
     RouteListCreateView,
     RoutePreviewView,
     RouteRetrieveView,
+    NearbyChargersView,
+    RouteValidateJoinView,
 )
 from api.v2.views import ListRoutes
 
@@ -14,6 +16,9 @@ urlpatterns = [
     path("routes", RouteListCreateView.as_view(), name="route-list-create"),
     path("routes/preview", RoutePreviewView.as_view(), name="route-list-create"),
     path("routes/<int:pk>", RouteRetrieveView.as_view(), name="route-detail"),
+    path(
+        "routes/<int:pk>/validate_join", RouteValidateJoinView.as_view(), name="route-validate-join"
+    ),
     path("routes/<int:pk>/join", RouteJoinView.as_view(), name="route-join"),
     path("routes/<int:pk>/leave", RouteLeaveView.as_view(), name="route-leave"),
     path("v2/routes", ListRoutes.as_view(), name="list-routes-v2"),
@@ -41,4 +46,5 @@ urlpatterns = urlpatterns + [
     path("swagger<format>/", schema_view.without_ui(cache_timeout=0), name="schema-json"),
     path("swagger/", schema_view.with_ui("swagger", cache_timeout=0), name="schema-swagger-ui"),
     path("redoc/", schema_view.with_ui("redoc", cache_timeout=0), name="schema-redoc"),
+    path("chargers/", NearbyChargersView.as_view(), name="chargers"),
 ]
