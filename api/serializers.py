@@ -1,5 +1,6 @@
 from common.models.route import Route
 from rest_framework.serializers import ModelSerializer
+from rest_framework import serializers
 
 from common.models.user import User
 from common.models.charger import LocationCharger, ChargerLocationType, ChargerVelocity
@@ -135,3 +136,6 @@ class LocationChargerSerializer(ModelSerializer):
             "longitud",
             "adreA",
         ]
+
+class PaymentMethodSerializer(serializers.Serializer):
+    payment_method_id = serializers.CharField()

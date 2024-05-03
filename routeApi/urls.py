@@ -5,6 +5,7 @@ from api.views import (
     RoutePreviewView,
     RouteRetrieveView,
     NearbyChargersView,
+    RouteValidateJoinView,
 )
 from api.v2.views import ListRoutes
 
@@ -14,6 +15,9 @@ urlpatterns = [
     path("routes", RouteListCreateView.as_view(), name="route-list-create"),
     path("routes/preview", RoutePreviewView.as_view(), name="route-list-create"),
     path("routes/<int:pk>", RouteRetrieveView.as_view(), name="route-detail"),
+    path(
+        "routes/<int:pk>/validate_join", RouteValidateJoinView.as_view(), name="route-validate-join"
+    ),
     path("routes/<int:pk>/join", RouteJoinView.as_view(), name="route-join"),
     path("routes/<int:pk>/leave", RouteLeaveView.as_view(), name="route-leave"),
     path("v2/routes", ListRoutes.as_view(), name="list-routes-v2"),
