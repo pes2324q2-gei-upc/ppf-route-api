@@ -1,0 +1,92 @@
+[
+    {
+        "model": "common.achievement",
+        "pk": 1,
+        "fields": {
+            "title": "PrimeraVez",
+            "description": "Como arquitecto de caminos virtuales, has iniciado el primer paso de un viaje al crear tu primera ruta.",
+            "image": "primeravez.png",
+            "required_points": 1
+        }
+    },
+    {
+        "model": "common.achievement",
+        "pk": 2,
+        "fields": {
+            "title": "FinalFeliz",
+            "description": "Persistente y decidido, has alcanzado el final de tu ruta, demostrando que ningún destino está demasiado lejos.",
+            "image": "finalfeliz.png",
+            "required_points": 1
+        }
+    },
+    {
+        "model": "common.achievement",
+        "pk": 3,
+        "fields": {
+            "title": "InfiltRuta",
+            "description": "Otorgado al aventurero que, buscando horizontes compartidos, se ha sumado a la ruta de otro. ¡Un viaje compartido es un viaje doble!",
+            "image": "infilruta.png",
+            "required_points": 1
+        }
+    },
+    {
+        "model": "common.achievement",
+        "pk": 4,
+        "fields": {
+            "title": "CriticoEstelar",
+            "description": "Si algo te gusta, lo aplaudes; si algo te disgusta, lo señalas. ¡Has conseguido valorar a un compañero de ruta!",
+            "image": "criticoestelar.png",
+            "required_points": 1
+        }
+    },
+    {
+        "model": "common.achievement",
+        "pk": 5,
+        "fields": {
+            "title": "Camaleon",
+            "description": "Como un camaleón digital, has cambiado tu foto de perfil. ¡Muestra al mundo tu verdadero yo… o al menos tu yo de esta semana!",
+            "image": "camaleon.png",
+            "required_points": 1
+        }
+    },
+    {
+        "model": "common.achievement",
+        "pk": 6,
+        "fields": {
+            "title": "ExploradorDecenal",
+            "description": "Te has embarcado en 10 viajes distintos, demostrando tu espíritu aventurero y tu disposición para explorar nuevas rutas.",
+            "image": "exploradordecenal.png",
+            "required_points": 10
+        }
+    },
+    {
+        "model": "common.achievement",
+        "pk": 7,
+        "fields": {
+            "title": "NomadaIntrepido",
+            "description": "Con 50 rutas bajo tu cinturón, has demostrado un compromiso excepcional con la exploración y la aventura. ¡Sigue uniéndote a más rutas!",
+            "image": "nomadaintrepido.png",
+            "required_points": 50
+        }
+    },
+    {
+        "model": "common.achievement",
+        "pk": 8,
+        "fields": {
+            "title": "ArquitectoViajero",
+            "description": "Has diseñado 10 rutas únicas, dejando tu huella en el mundo y guiando a otros en sus viajes. ¡Tu creatividad y visión son dignas de elogio!",
+            "image": "arquitectoviajero.png",
+            "required_points": 10
+        }
+    },
+    {
+        "model": "common.achievement",
+        "pk": 9,
+        "fields": {
+            "title": "MaestroDeRutas",
+            "description": "Has trazado 50 rutas, demostrando ser un verdadero maestro en la creación de caminos. ¡Tu contribución es inestimable!",
+            "image": "maestroderutas.png",
+            "required_points": 50
+        }
+    }
+]
