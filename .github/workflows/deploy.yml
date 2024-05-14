@@ -49,6 +49,6 @@ jobs:
        docker save ${{github.event.repository.name}}:latest -o ${{github.event.repository.name}}.tar
        docker context create remote --docker "host=ssh://${{ secrets.USERNAME }}@${{ secrets.HOST }}"
        docker context use remote
-       docker rm -f $(docker ps -aq)
+       docker rm -f route-api
        docker load -i ${{github.event.repository.name}}.tar
        docker compose -f docker-compose.yml up route-api -d
