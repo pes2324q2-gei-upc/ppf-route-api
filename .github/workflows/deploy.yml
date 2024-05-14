@@ -52,3 +52,4 @@ jobs:
        docker rm -f route-api
        docker load -i ${{github.event.repository.name}}.tar
        docker compose -f docker-compose.yml up route-api -d
+       docker system prune
