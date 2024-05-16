@@ -34,3 +34,6 @@ sqlparse==0.4.4
 toposort==1.10
 uritemplate==4.1.1
 urllib3==2.2.1
+boto3
+django-storages==1.14.0
+pillow
