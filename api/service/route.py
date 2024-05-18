@@ -113,6 +113,9 @@ def validateJoinRoute(routeId: int, passengerId: int):
     if route.cancelled:
         raise ValidationError("You can not join a cancelled route", 400)
 
+    if route.finalized:
+        raise ValidationError("You can not join a finalized route", 400)
+
     # check if the user is already in a route that overlaps with the current route
     joinedRoutes = route.passengers.filter(id=passengerId)
     for joinedRoute in joinedRoutes:
