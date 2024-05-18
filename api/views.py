@@ -71,8 +71,8 @@ class RoutePreviewView(CreateAPIView):
 
     def post(self, request: Request, *args, **kargs):
         serializer = self.get_serializer(
-            data={"driver": request.user.id, **request.data}
-        )  # type: ignore
+            data={"driver": request.user.id, **request.data}  # type: ignore
+        )
 
         if not serializer.is_valid(raise_exception=True):
             return Response(status=HTTP_400_BAD_REQUEST)
