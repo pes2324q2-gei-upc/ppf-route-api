@@ -2,6 +2,7 @@ from api.views import (
     RoutePassengersList,
     RouteJoinView,
     RouteLeaveView,
+    RouteCancelView,
     RouteListCreateView,
     RoutePreviewView,
     RouteRetrieveView,
@@ -23,6 +24,7 @@ urlpatterns = [
     path("routes/<int:pk>/leave", RouteLeaveView.as_view(), name="route-leave"),
     path("v2/routes", ListRoutes.as_view(), name="list-routes-v2"),
     path("routes/<int:pk>/passengers", RoutePassengersList.as_view(), name="route-list-passengers"),
+    path("routes/<int:pk>/cancel", RouteCancelView.as_view(), name="route-cancel"),
 ]
 
 from drf_yasg import openapi
