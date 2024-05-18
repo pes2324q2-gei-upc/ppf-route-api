@@ -34,3 +34,5 @@ sqlparse==0.4.4
 toposort==1.10
 uritemplate==4.1.1
 urllib3==2.2.1
+geopy==2.2.0
+polyline==1.4.0
