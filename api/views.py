@@ -87,7 +87,7 @@ class RoutePreviewView(CreateAPIView):
             return Response(status=HTTP_400_BAD_REQUEST)
 
         # Compute the route and return it
-        preview = computeOptimizedRoute(serializer)
+        preview = computeOptimizedRoute(serializer, request.user.id)
 
         # TODO cache the route, maybe use a hash of the coordinates as the key
 

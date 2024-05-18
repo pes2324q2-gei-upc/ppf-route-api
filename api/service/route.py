@@ -10,7 +10,7 @@ import json
 from api import GoogleMapsRouteClient
 from api.serializers import CreateRouteSerializer, PreviewRouteSerializer
 from common.models.route import Route
-from common.models.user import User
+from common.models.user import User, Driver
 # Dont remove, it is use for migrate well
 from common.models.valuation import Valuation
 from common.models.charger import LocationCharger, ChargerLocationType
@@ -154,7 +154,7 @@ def buildMapsRouteRequestChargers(path: list):
     return computeRoutesRequest
 
 
-def computeOptimizedRoute(serializer: Union[PreviewRouteSerializer, CreateRouteSerializer]):
+def computeOptimizedRoute(serializer: Union[PreviewRouteSerializer, CreateRouteSerializer], driverId: int):
     """
     Creates a ComputeOptimizedRoutesRequest object based on the passed data.
 
@@ -173,7 +173,10 @@ def computeOptimizedRoute(serializer: Union[PreviewRouteSerializer, CreateRouteS
 
     # Get route bounds
     bounds = getRouteBounds(decodedPolyline)
-    chargersInArea = calculateChargerPoints(bounds)
+    user = Driver.objects.get(id=driverId)
+    # Convert ManyToManyRelatedManager to list
+    driverChargerTypes = list(user.chargerTypes.all())
+    chargersInArea = calculateChargerPoints(bounds, driverChargerTypes)
     # print(chargersInArea)
 
     # Create list with possible route points
@@ -185,7 +188,8 @@ def computeOptimizedRoute(serializer: Union[PreviewRouteSerializer, CreateRouteS
     routePoints["destination"] = decodedPolyline[-1]
     # print(routePoints)
 
-    possibleRoutes = calculatePossibleRoute(routePoints)
+    autonomy = user.autonomy  # type: ignore
+    possibleRoutes = calculatePossibleRoute(routePoints, autonomy)
     print(len(possibleRoutes))
     if len(possibleRoutes) == 1:
         possibleRoutes.append(decodedPolyline[0])
@@ -229,7 +233,7 @@ def getRouteBounds(decodedPolyline: list):
     return bounds
 
 
-def calculateChargerPoints(bounds: dict):
+def calculateChargerPoints(bounds: dict, chargerTypes: list):
     """
     Returns the charger points within the area of the route.
 
@@ -237,17 +241,17 @@ def calculateChargerPoints(bounds: dict):
         bounds (dict): The bounds of the route.
     """
     # Hardoced car details
-    chargerTypeObj = ChargerLocationType.objects.get(chargerType="MENNEKES")
-    acDc = "DC"
+    chargerTypeObjs = ChargerLocationType.objects.filter(
+        chargerType__in=chargerTypes)
 
     # Get the charger points
-    chargerPoints = LocationCharger.objects.filter(connectionType__in=[chargerTypeObj], acDc=acDc, latitud__gte=bounds["southwest"][
+    chargerPoints = LocationCharger.objects.filter(connectionType__in=chargerTypeObjs, latitud__gte=bounds["southwest"][
         0], latitud__lte=bounds["northeast"][0], longitud__gte=bounds["southwest"][1], longitud__lte=bounds["northeast"][1])
 
     return list(chargerPoints.values())
 
 
-def calculatePossibleRoute(routePoints: dict):
+def calculatePossibleRoute(routePoints: dict, autonomy: float):
     """
     Returns the possible routes based on the charger points.
 
@@ -268,7 +272,7 @@ def calculatePossibleRoute(routePoints: dict):
 
     # print("routeGraph", routeGraph)
     # print("dijkstra", dijkstra(routeGraph, "origin", "destination"))
-    order = dijkstra(routeGraph, "origin", "destination")
+    order = dijkstra(routeGraph, "origin", "destination", autonomy)
     routeLangLong = []
     for point in order:
         routeLangLong.append(routePoints[point])
