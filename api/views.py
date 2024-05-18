@@ -26,6 +26,7 @@ from rest_framework.generics import (
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
+from rest_framework.exceptions import ValidationError
 from rest_framework.status import (
     HTTP_200_OK,
     HTTP_201_CREATED,
@@ -34,7 +35,13 @@ from rest_framework.status import (
     HTTP_404_NOT_FOUND,
 )
 from common.models.user import Driver
-from .service.route import computeMapsRoute, joinRoute, leaveRoute, validateJoinRoute
+from .service.route import (
+    computeMapsRoute,
+    joinRoute,
+    leaveRoute,
+    validateJoinRoute,
+    forcedLeaveRoute,
+)
 
 # Don't delete, needed to create db with models
 from common.models.charger import ChargerLocationType, ChargerVelocity, ChargerLocationType
@@ -218,8 +225,13 @@ class RouteCancelView(CreateAPIView):
                 {"message": "Route have been already finalized"}, status=HTTP_400_BAD_REQUEST
             )
 
+        for passenger in route.passengers.all():
+            try:
+                forcedLeaveRoute(route.id, passenger.id)
+            except ValidationError as e:
+                return Response({"error": str(e)}, status=HTTP_400_BAD_REQUEST)
+
         route.cancelled = True
-        route.passengers.clear()
         route.save()
         return Response({"message": "Route successfully cancelled"}, status=HTTP_200_OK)
 
