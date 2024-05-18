@@ -2,6 +2,7 @@ import heapq
 from typing import Union
 from geopy.distance import distance
 import polyline
+import time
 
 from common.models.payment import Payment
 from django.utils import timezone
@@ -189,7 +190,7 @@ def computeOptimizedRoute(serializer: Union[PreviewRouteSerializer, CreateRouteS
     # print(routePoints)
 
     autonomy = user.autonomy  # type: ignore
-    possibleRoutes = calculatePossibleRoute(routePoints, autonomy)
+    possibleRoutes = calculatePossibleRoute(routePoints, 50)
     print(len(possibleRoutes))
     if len(possibleRoutes) == 1:
         possibleRoutes.append(decodedPolyline[0])
@@ -242,12 +243,12 @@ def calculateChargerPoints(bounds: dict, chargerTypes: list):
     """
     # Hardoced car details
     chargerTypeObjs = ChargerLocationType.objects.filter(
-        chargerType__in=chargerTypes)
-
+        chargerType="MENNEKES")
+    print(chargerTypeObjs)
     # Get the charger points
-    chargerPoints = LocationCharger.objects.filter(connectionType__in=chargerTypeObjs, latitud__gte=bounds["southwest"][
+    chargerPoints = LocationCharger.objects.filter(connectionType__in=chargerTypeObjs, acDc="AC", latitud__gte=bounds["southwest"][
         0], latitud__lte=bounds["northeast"][0], longitud__gte=bounds["southwest"][1], longitud__lte=bounds["northeast"][1])
-
+    print(len(chargerPoints))
     return list(chargerPoints.values())
 
 
@@ -272,7 +273,9 @@ def calculatePossibleRoute(routePoints: dict, autonomy: float):
 
     # print("routeGraph", routeGraph)
     # print("dijkstra", dijkstra(routeGraph, "origin", "destination"))
+    start_time = time.time()
     order = dijkstra(routeGraph, "origin", "destination", autonomy)
+    print("--- %s seconds ---" % (time.time() - start_time))
     routeLangLong = []
     for point in order:
         routeLangLong.append(routePoints[point])
