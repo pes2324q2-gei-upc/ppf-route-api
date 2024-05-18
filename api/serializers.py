@@ -1,3 +1,4 @@
+from pkg_resources import require
 from common.models.route import Route
 from rest_framework.serializers import ModelSerializer
 from rest_framework import serializers
@@ -70,8 +71,8 @@ class ListRouteSerializer(ModelSerializer):
 
     driver = UserListSerializer(many=False, read_only=True)
     passengers = UserListSerializer(many=True, read_only=True)
-    originDistance = serializers.FloatField(read_only=True)
-    destinationDistance = serializers.FloatField(read_only=True)
+    originDistance = serializers.FloatField(read_only=True, required=False)
+    destinationDistance = serializers.FloatField(read_only=True, required=False)
 
     class Meta:
         model = Route
