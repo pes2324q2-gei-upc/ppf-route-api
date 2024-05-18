@@ -1,4 +1,4 @@
-from django.db.models import Q
+from django.db.models import Q, FloatField, Value, Case, When
 from django_filters import FilterSet
 from common.models.route import Route
 from rest_framework.pagination import PageNumberPagination
@@ -61,20 +61,51 @@ class BaseRouteFilter(FilterSet):
         The queryset is all the routes within the radius of the origin and destination coordinates.
         """
         origin_lat, origin_lon, dest_lat, dest_lon = map(float, value.split(","))
+        routes = list(queryset)
 
-        def is_within_radius(route):
-            origin_distance = haversine(
+        # Calculate the distance with haversine formula
+        filtered_routes = []
+        for route in routes:
+            originDistance = haversine(
                 (origin_lat, origin_lon), (route.originLat, route.originLon), unit=Unit.KILOMETERS
             )
-            destination_distance = haversine(
+            destinationDistance = haversine(
                 (dest_lat, dest_lon),
                 (route.destinationLat, route.destinationLon),
                 unit=Unit.KILOMETERS,
             )
-            return origin_distance <= self.radius and destination_distance <= self.radius
+            if originDistance <= self.radius and destinationDistance <= self.radius:
+                route.originDistance = originDistance
+                route.destinationDistance = destinationDistance
+                filtered_routes.append(route)
 
-        filtered_routes = filter(is_within_radius, queryset)
-        return queryset.filter(id__in=[route.id for route in filtered_routes])
+        if not filtered_routes:  # No routes within the radius
+            return queryset.none()
+
+        # Filter using the filtered_routes found. This creates a queryset
+        filtered_ids = [route.id for route in filtered_routes]
+        filtered_queryset = queryset.filter(id__in=filtered_ids)
+
+        # Case and When used to do conditional queries on the queryset
+        origin_distance_annotation = Case(
+            *[When(id=route.id, then=Value(route.originDistance)) for route in filtered_routes],
+            output_field=FloatField(),
+        )
+        destination_distance_annotation = Case(
+            *[
+                When(id=route.id, then=Value(route.destinationDistance))
+                for route in filtered_routes
+            ],
+            output_field=FloatField(),
+        )
+
+        # Add dinamically the origin and destination distances to the queryset
+        filtered_queryset = filtered_queryset.annotate(
+            originDistance=origin_distance_annotation,
+            destinationDistance=destination_distance_annotation,
+        )
+
+        return filtered_queryset
 
     class Meta:
         model = Route

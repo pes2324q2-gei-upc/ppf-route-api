@@ -70,6 +70,8 @@ class ListRouteSerializer(ModelSerializer):
 
     driver = UserListSerializer(many=False, read_only=True)
     passengers = UserListSerializer(many=True, read_only=True)
+    originDistance = serializers.FloatField(read_only=True)
+    destinationDistance = serializers.FloatField(read_only=True)
 
     class Meta:
         model = Route
@@ -84,6 +86,8 @@ class ListRouteSerializer(ModelSerializer):
             "freeSeats",
             "price",
             "passengers",
+            "originDistance",
+            "destinationDistance",
         ]
 
 
@@ -136,6 +140,7 @@ class LocationChargerSerializer(ModelSerializer):
             "longitud",
             "adreA",
         ]
+
 
 class PaymentMethodSerializer(serializers.Serializer):
     payment_method_id = serializers.CharField()
