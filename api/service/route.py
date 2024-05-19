@@ -6,6 +6,7 @@ import time
 from sklearn.neighbors import NearestNeighbors
 import numpy as np
 
+from common.models import charger
 from common.models.payment import Payment
 from django.utils import timezone
 import requests
@@ -150,9 +151,7 @@ def buildMapsRouteRequestChargers(path: list):
         },
         "intermediates": []
     }
-
     mapping["intermediates"] = intermediates
-    print(mapping)
     computeRoutesRequest = ComputeRoutesRequest(mapping)
     return computeRoutesRequest
 
@@ -192,16 +191,12 @@ def computeOptimizedRoute(serializer: Union[PreviewRouteSerializer, CreateRouteS
     # print(routePoints)
 
     autonomy = user.autonomy  # type: ignore
-    start_time = time.time()
     possibleRoutes = calculatePossibleRoute(routePoints, 100)
-    print("--- %s seconds ---" % (time.time() - start_time))
-    print(possibleRoutes)
-    if len(possibleRoutes) == 1:
-        possibleRoutes.append(decodedPolyline[0])
-    # print(possibleRoutes)
-    # return possibleRoutes
+    # if len(possibleRoutes) == 1:
+    #     possibleRoutes.append(decodedPolyline[0])
     mapsPayload = buildMapsRouteRequestChargers(
         possibleRoutes)
+    print(mapsPayload)
     request = ComputeRoutesRequest(mapping=mapsPayload)
     response = GoogleMapsRouteClient.compute_routes(
         request=request, metadata=[X_GOOGLE_FIELDS])
@@ -245,13 +240,17 @@ def calculateChargerPoints(bounds: dict, chargerTypes: list):
     Args:
         bounds (dict): The bounds of the route.
     """
-    # Hardoced car details
-    chargerTypeObjs = ChargerLocationType.objects.filter(
-        chargerType="MENNEKES")
-    print(chargerTypeObjs)
+    try:
+        chargerTypeObjs = ChargerLocationType.objects.filter(
+            chargerType="MENNEKES")
+    except ChargerLocationType.DoesNotExist:
+        raise ValidationError("Charger type does not exist", 400)
     # Get the charger points
-    chargerPoints = LocationCharger.objects.filter(connectionType__in=chargerTypeObjs, acDc="AC", latitud__gte=bounds["southwest"][
-        0], latitud__lte=bounds["northeast"][0], longitud__gte=bounds["southwest"][1], longitud__lte=bounds["northeast"][1])
+    try:
+        chargerPoints = LocationCharger.objects.filter(connectionType__in=chargerTypeObjs, acDc="AC", latitud__gte=bounds["southwest"][
+            0], latitud__lte=bounds["northeast"][0], longitud__gte=bounds["southwest"][1], longitud__lte=bounds["northeast"][1])
+    except LocationCharger.DoesNotExist:
+        raise ValidationError("Charger points do not exist", 400)
     print(len(chargerPoints))
     return list(chargerPoints.values())
 
@@ -275,7 +274,8 @@ def calculatePossibleRoute(routePoints: dict, autonomy: float):
 
     # Use the NearestNeighbors class from sklearn to find the k nearest neighbors
     # Adjust the number of neighbors as needed
-    knn = NearestNeighbors(n_neighbors=100)
+    n_neighbors = min(100, len(routePointsArray) - 1)
+    knn = NearestNeighbors(n_neighbors=n_neighbors)
     knn.fit(routePointsArray)
 
     routeGraph = {}

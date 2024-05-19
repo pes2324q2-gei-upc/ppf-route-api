@@ -62,7 +62,7 @@ class Command(BaseCommand):
                                             encoding='utf-8', level=logging.WARNING)
                         logger.warning(error)
                         self.stdout.write(self.style.WARNING(
-                            "Error while trying to add connection type"))
+                            "Error while trying to add connection type: " + connection_type))
 
             # Add velocities
             velocities = item['tipus_velocitat'].split(' i ')
@@ -78,7 +78,7 @@ class Command(BaseCommand):
                                         encoding='utf-8', level=logging.WARNING)
                     logger.warning(error)
                     self.stdout.write(self.style.WARNING(
-                        "Error while trying to add velocity"))
+                        "Error while trying to add velocity: " + velocity))
 
         self.stdout.write(self.style.SUCCESS('Data seeded successfully'))
 
