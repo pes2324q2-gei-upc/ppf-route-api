@@ -45,7 +45,7 @@ from .service.route import (
 
 # Don't delete, needed to create db with models
 from common.models.charger import ChargerLocationType, ChargerVelocity, ChargerLocationType
-
+from common.models.achievement import Achievement, UserAchievementProgress
 
 from math import radians, cos, sin, sqrt, atan2
 from common.models.charger import LocationCharger
