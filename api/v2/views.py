@@ -25,8 +25,8 @@ class BaseRouteAPIView(APIView):
     Routes service can only be accesed by authenticated and authorized users
     """
 
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    # authentication_classes = [TokenAuthentication]
+    # permission_classes = [IsAuthenticated]
     pagination_class = BasePaginator
     ordering = ["id"]
     # renderer classes set by default in settings
