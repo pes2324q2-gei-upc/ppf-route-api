@@ -3,6 +3,8 @@ from typing import Union
 from geopy.distance import distance
 import polyline
 import time
+from sklearn.neighbors import NearestNeighbors
+import numpy as np
 
 from common.models.payment import Payment
 from django.utils import timezone
@@ -150,7 +152,7 @@ def buildMapsRouteRequestChargers(path: list):
     }
 
     mapping["intermediates"] = intermediates
-
+    print(mapping)
     computeRoutesRequest = ComputeRoutesRequest(mapping)
     return computeRoutesRequest
 
@@ -190,8 +192,10 @@ def computeOptimizedRoute(serializer: Union[PreviewRouteSerializer, CreateRouteS
     # print(routePoints)
 
     autonomy = user.autonomy  # type: ignore
-    possibleRoutes = calculatePossibleRoute(routePoints, 50)
-    print(len(possibleRoutes))
+    start_time = time.time()
+    possibleRoutes = calculatePossibleRoute(routePoints, 100)
+    print("--- %s seconds ---" % (time.time() - start_time))
+    print(possibleRoutes)
     if len(possibleRoutes) == 1:
         possibleRoutes.append(decodedPolyline[0])
     # print(possibleRoutes)
@@ -201,7 +205,7 @@ def computeOptimizedRoute(serializer: Union[PreviewRouteSerializer, CreateRouteS
     request = ComputeRoutesRequest(mapping=mapsPayload)
     response = GoogleMapsRouteClient.compute_routes(
         request=request, metadata=[X_GOOGLE_FIELDS])
-    return {"route_data": deserializeMapsRoutesResponse(response), "charger_info": chargersInArea}
+    return {"route_data": deserializeMapsRoutesResponse(response), "charger_points": possibleRoutes[1:-2]}
 
 
 def getRouteBounds(decodedPolyline: list):
@@ -260,25 +264,42 @@ def calculatePossibleRoute(routePoints: dict, autonomy: float):
         routePoints (dict): The route points.
     """
 
+    time_start_pre = time.time()
+    # Convert the route points to a numpy array
+    routePointsArray = np.array(list(routePoints.values()))
+
+    # Use the NearestNeighbors class from sklearn to find the k nearest neighbors
+    # Adjust the number of neighbors as needed
+    knn = NearestNeighbors(n_neighbors=100)
+    knn.fit(routePointsArray)
+
     routeGraph = {}
-    for originPoint in routePoints:
+    # Create a list of keys from routePoints
+    routePointsList = list(routePoints.keys())
+
+    for i, originPoint in enumerate(routePointsList):
         routeGraph[originPoint] = {}
-        for destinationPoint in routePoints:
-            if originPoint != destinationPoint:
-                # Calculate the cost to go from originPoint to destinationPoint
-                # This is a placeholder, replace it with your actual cost calculation
+
+        # Get the indices of the k nearest neighbors
+        neighbors = knn.kneighbors(
+            [routePointsArray[i]], return_distance=False)
+
+        for neighbor in neighbors[0]:
+            if neighbor != i:
+                # Calculate the cost to go from originPoint to the neighbor
                 cost = distance(routePoints[originPoint],
-                                routePoints[destinationPoint]).km
-                routeGraph[originPoint][destinationPoint] = cost
+                                routePoints[routePointsList[neighbor]]).km
+                routeGraph[originPoint][routePointsList[neighbor]] = cost
+    print("--- %s seconds INGRAPH ---" % (time.time() - time_start_pre))
 
     # print("routeGraph", routeGraph)
     # print("dijkstra", dijkstra(routeGraph, "origin", "destination"))
-    start_time = time.time()
     order = dijkstra(routeGraph, "origin", "destination", autonomy)
-    print("--- %s seconds ---" % (time.time() - start_time))
+    start_time = time.time()
     routeLangLong = []
     for point in order:
         routeLangLong.append(routePoints[point])
+    print("--- %s seconds INMETHOD ---" % (time.time() - start_time))
     return routeLangLong
 
 
@@ -303,9 +324,6 @@ def dijkstra(graph: dict, start: str, end: str, autonomy: float = 2.5):
     # Initialize the parent dictionary
     parents = {node: None for node in graph}
 
-    # Initialize the list of stops
-    stops = []
-
     while queue:
         # Get the node with the smallest distance
         current_distance, current_node = heapq.heappop(queue)
@@ -323,7 +341,6 @@ def dijkstra(graph: dict, start: str, end: str, autonomy: float = 2.5):
             distance = current_distance + weight
             if distance < distances[neighbor] and weight <= autonomy:
                 distances[neighbor] = distance
-                # Fix: Set the value of current_node as the parent of neighbor
                 parents[neighbor] = current_node
                 heapq.heappush(queue, (distance, neighbor))
 
