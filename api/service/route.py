@@ -263,8 +263,13 @@ def calculatePossibleRoute(routePoints: dict, autonomy: float):
     Args:
         routePoints (dict): The route points.
     """
+    origin_to_destination_distance = distance(
+        routePoints["origin"], routePoints["destination"]).km
 
-    time_start_pre = time.time()
+    # If the distance is less than the autonomy, return a direct route
+    if origin_to_destination_distance <= autonomy:
+        return [routePoints["origin"], routePoints["destination"]]
+
     # Convert the route points to a numpy array
     routePointsArray = np.array(list(routePoints.values()))
 
@@ -290,16 +295,13 @@ def calculatePossibleRoute(routePoints: dict, autonomy: float):
                 cost = distance(routePoints[originPoint],
                                 routePoints[routePointsList[neighbor]]).km
                 routeGraph[originPoint][routePointsList[neighbor]] = cost
-    print("--- %s seconds INGRAPH ---" % (time.time() - time_start_pre))
 
     # print("routeGraph", routeGraph)
     # print("dijkstra", dijkstra(routeGraph, "origin", "destination"))
     order = dijkstra(routeGraph, "origin", "destination", autonomy)
-    start_time = time.time()
     routeLangLong = []
     for point in order:
         routeLangLong.append(routePoints[point])
-    print("--- %s seconds INMETHOD ---" % (time.time() - start_time))
     return routeLangLong
 
 
