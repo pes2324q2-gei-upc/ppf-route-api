@@ -37,4 +37,4 @@ urllib3==2.2.1
 geopy==2.2.0
 polyline==1.4.0
 scikit-learn==1.4.2
-numpy==1.22.0
+numpy==1.26.4
