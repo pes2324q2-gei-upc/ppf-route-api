@@ -26,13 +26,22 @@ from rest_framework.generics import (
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
+from rest_framework.exceptions import ValidationError
 from rest_framework.status import (
     HTTP_200_OK,
     HTTP_201_CREATED,
     HTTP_400_BAD_REQUEST,
+    HTTP_403_FORBIDDEN,
+    HTTP_404_NOT_FOUND,
 )
 from common.models.user import Driver
-from .service.route import computeMapsRoute, joinRoute, leaveRoute, validateJoinRoute
+from .service.route import (
+    computeMapsRoute,
+    joinRoute,
+    leaveRoute,
+    validateJoinRoute,
+    forcedLeaveRoute,
+)
 
 # Don't delete, needed to create db with models
 from common.models.charger import ChargerLocationType, ChargerVelocity, ChargerLocationType
@@ -69,7 +78,8 @@ class RoutePreviewView(CreateAPIView):
 
     def post(self, request: Request, *args, **kargs):
         serializer = self.get_serializer(
-            data={"driver": request.user.id, **request.data})  # type: ignore
+            data={"driver": request.user.id, **request.data}  # type: ignore
+        )
 
         if not serializer.is_valid(raise_exception=True):
             return Response(status=HTTP_400_BAD_REQUEST)
@@ -184,17 +194,46 @@ class RouteLeaveView(CreateAPIView):
         return Response({"message": "User successfully left the route"}, status=HTTP_200_OK)
 
 
-class RouteCancellView(CreateAPIView):
+class RouteCancelView(CreateAPIView):
     """
     Cancel a route
     URI:
-    - POST /routes/{id}/cancell
+    - POST /routes/{id}/cancel
     """
 
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
-    queryset = Route.objects.all()
+    def post(self, request, *args, **kwargs):
+        try:
+            route = Route.objects.get(id=self.kwargs["pk"])
+        except Route.DoesNotExist:
+            return Response({"message": "Route not exist"}, status=HTTP_404_NOT_FOUND)
+
+        if route.driver_id != request.user.id:
+            return Response(
+                {"message": "You are not the driver of the route"}, status=HTTP_403_FORBIDDEN
+            )
+
+        if route.cancelled:
+            return Response(
+                {"message": "Route have been already cancelled"}, status=HTTP_400_BAD_REQUEST
+            )
+
+        if route.finalized:
+            return Response(
+                {"message": "Route have been already finalized"}, status=HTTP_400_BAD_REQUEST
+            )
+
+        for passenger in route.passengers.all():
+            try:
+                forcedLeaveRoute(route.id, passenger.id)
+            except ValidationError as e:
+                return Response({"error": str(e)}, status=HTTP_400_BAD_REQUEST)
+
+        route.cancelled = True
+        route.save()
+        return Response({"message": "Route successfully cancelled"}, status=HTTP_200_OK)
 
 
 class NearbyChargersView(ListAPIView):
