@@ -38,3 +38,4 @@ geopy==2.2.0
 polyline==1.4.0
 scikit-learn==1.4.2
 numpy==1.26.4
+firebase-admin==6.5.0
