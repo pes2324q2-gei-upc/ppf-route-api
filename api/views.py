@@ -4,6 +4,7 @@ This module contains the views for the API endpoints related to routes.
 """
 
 from typing import Union
+
 from api.serializers import (
     CreateRouteSerializer,
     DetaliedRouteSerializer,
@@ -42,6 +43,7 @@ from .service.route import (
     validateJoinRoute,
     forcedLeaveRoute,
 )
+from .service.notify import Notification, notifyDriver, notifyPassengers
 
 # Don't delete, needed to create db with models
 from common.models.charger import ChargerLocationType, ChargerVelocity, ChargerLocationType
@@ -174,6 +176,7 @@ class RouteJoinView(CreateAPIView):
         userId = request.user.id
         validateJoinRoute(routeId, userId)
         joinRoute(routeId, userId, paymentMethodId)
+        notifyDriver(routeId, Notification.PASSENGER_JOINED)
         return Response({"message": "User successfully joined the route"}, status=HTTP_200_OK)
 
 
@@ -191,6 +194,7 @@ class RouteLeaveView(CreateAPIView):
         routeId = self.kwargs["pk"]
         userId = request.user.id
         leaveRoute(routeId, userId)
+        notifyDriver(routeId, Notification.PASSENGER_LEFT)
         return Response({"message": "User successfully left the route"}, status=HTTP_200_OK)
 
 
@@ -233,6 +237,7 @@ class RouteCancelView(CreateAPIView):
 
         route.cancelled = True
         route.save()
+        notifyPassengers(route.id, Notification.ROUTE_CANCELLED)
         return Response({"message": "Route successfully cancelled"}, status=HTTP_200_OK)
 
 
