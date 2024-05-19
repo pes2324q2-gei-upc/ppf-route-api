@@ -6,7 +6,16 @@ from common.models.route import Route
 NOTIFY_API_URL = "http://user-api:8000/api/service/notify"
 
 
+from enum import Enum
+
+
 class Notification(Enum):
+    """
+    Enum class representing different types of notifications.
+    Each notification has a title and a body.
+    Body can be formatted with the destination of the route.
+    """
+
     ROUTE_STARTED = ("Route Started", "The route to {destination} has started")
     ROUTE_ENDED = ("Route Ended", "The route to {destination} has ended")
     ROUTE_CANCELLED = ("Route Canceled", "The route to {destination} has been canceled")
@@ -15,10 +24,16 @@ class Notification(Enum):
 
     @property
     def title(self):
+        """
+        Get the title of the notification.
+        """
         return self.value[0]
 
     @property
     def body(self):
+        """
+        Get the body of the notification.
+        """
         return self.value[1]
 
 
