@@ -191,7 +191,7 @@ def computeOptimizedRoute(serializer: Union[PreviewRouteSerializer, CreateRouteS
     # print(routePoints)
 
     autonomy = user.autonomy  # type: ignore
-    possibleRoutes = calculatePossibleRoute(routePoints, 100)
+    possibleRoutes = calculatePossibleRoute(routePoints, autonomy)
     # if len(possibleRoutes) == 1:
     #     possibleRoutes.append(decodedPolyline[0])
     mapsPayload = buildMapsRouteRequestChargers(
@@ -242,9 +242,10 @@ def calculateChargerPoints(bounds: dict, chargerTypes: list):
     """
     try:
         chargerTypeObjs = ChargerLocationType.objects.filter(
-            chargerType="MENNEKES")
+            chargerType__in=chargerTypes)
     except ChargerLocationType.DoesNotExist:
         raise ValidationError("Charger type does not exist", 400)
+    print(chargerTypeObjs)
     # Get the charger points
     try:
         chargerPoints = LocationCharger.objects.filter(connectionType__in=chargerTypeObjs, acDc="AC", latitud__gte=bounds["southwest"][
