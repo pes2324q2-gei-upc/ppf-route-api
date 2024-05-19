@@ -1,28 +1,24 @@
 import heapq
-from typing import Union
-from geopy.distance import distance
-import polyline
-import time
-from sklearn.neighbors import NearestNeighbors
-import numpy as np
-
-from common.models import charger
-from common.models.payment import Payment
-from django.utils import timezone
-import requests
 import json
+from typing import Union
+
+import numpy as np
+import polyline
+import requests
 from api import GoogleMapsRouteClient
 from api.serializers import CreateRouteSerializer, PreviewRouteSerializer
+from common.models.charger import ChargerLocationType, LocationCharger
 from common.models.route import Route
-from common.models.user import User, Driver
+from common.models.user import Driver, User
+
 # Dont remove, it is use for migrate well
-from common.models.valuation import Valuation
-from common.models.charger import LocationCharger, ChargerLocationType
+from django.utils import timezone
+from geopy.distance import distance
 from google.maps.routing_v2 import ComputeRoutesRequest, ComputeRoutesResponse
 from google.maps.routing_v2 import Route as GRoute
-from rest_framework.exceptions import ValidationError
-from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
+from rest_framework.exceptions import ValidationError
+from sklearn.neighbors import NearestNeighbors
 
 X_GOOGLE_FIELDS = (
     "x-goog-fieldmask",
@@ -43,19 +39,16 @@ def buildMapsRouteRequest(
         "origin": {
             "location": {
                 "lat_lng": {
-                    "latitude": serializer.validated_data.get("originLat"),
-                    # type: ignore
-                    "longitude": serializer.validated_data.get("originLon"),
+                    "latitude": serializer.validated_data.get("originLat"),  # type: ignore
+                    "longitude": serializer.validated_data.get("originLon"),  # type: ignore
                 }
             }
         },
         "destination": {
             "location": {
                 "lat_lng": {
-                    # type: ignore
-                    "latitude": serializer.validated_data.get("destinationLat"),
-                    # type: ignore
-                    "longitude": serializer.validated_data.get("destinationLon"),
+                    "latitude": serializer.validated_data.get("destinationLat"),  # type: ignore
+                    "longitude": serializer.validated_data.get("destinationLon"),  # type: ignore
                 }
             }
         },
@@ -71,8 +64,7 @@ def deserializeMapsRoutesResponse(mapsRoute: ComputeRoutesResponse):
     Args:
         response (ComputeRoutesResponse): The ComputeRoutesResponse object to serialize.
     """
-    assert isinstance(
-        mapsRoute, ComputeRoutesResponse), "Wrong type for response parameter"
+    assert isinstance(mapsRoute, ComputeRoutesResponse), "Wrong type for response parameter"
 
     if not mapsRoute.routes:
         raise ValueError("No routes found")
@@ -99,8 +91,7 @@ def computeMapsRoute(serializer: Union[PreviewRouteSerializer, CreateRouteSerial
 
     # Initialize request argument(s)
     request = ComputeRoutesRequest(mapping=mapsPayload)
-    response = GoogleMapsRouteClient.compute_routes(
-        request=request, metadata=[X_GOOGLE_FIELDS])
+    response = GoogleMapsRouteClient.compute_routes(request=request, metadata=[X_GOOGLE_FIELDS])
 
     # Deserialize the response from the Google Maps API and send it back to the client
     return deserializeMapsRoutesResponse(response)
@@ -123,14 +114,16 @@ def buildMapsRouteRequestChargers(path: list):
     # waypoints_str = '|'.join(waypoints)
     intermediates = []
     for point in waypoints:
-        intermediates.append({
-            "location": {
-                "lat_lng": {
-                    "latitude": point[0],
-                    "longitude": point[1],
+        intermediates.append(
+            {
+                "location": {
+                    "lat_lng": {
+                        "latitude": point[0],
+                        "longitude": point[1],
+                    }
                 }
             }
-        })
+        )
 
     mapping = {
         "origin": {
@@ -149,14 +142,16 @@ def buildMapsRouteRequestChargers(path: list):
                 }
             }
         },
-        "intermediates": []
+        "intermediates": [],
     }
     mapping["intermediates"] = intermediates
     computeRoutesRequest = ComputeRoutesRequest(mapping)
     return computeRoutesRequest
 
 
-def computeOptimizedRoute(serializer: Union[PreviewRouteSerializer, CreateRouteSerializer], driverId: int):
+def computeOptimizedRoute(
+    serializer: Union[PreviewRouteSerializer, CreateRouteSerializer], driverId: int
+):
     """
     Creates a ComputeOptimizedRoutesRequest object based on the passed data.
 
@@ -166,12 +161,10 @@ def computeOptimizedRoute(serializer: Union[PreviewRouteSerializer, CreateRouteS
     # Refactor to outside method
     mapsPayload = buildMapsRouteRequest(serializer)
     request = ComputeRoutesRequest(mapping=mapsPayload)
-    response = GoogleMapsRouteClient.compute_routes(
-        request=request, metadata=[X_GOOGLE_FIELDS])
+    response = GoogleMapsRouteClient.compute_routes(request=request, metadata=[X_GOOGLE_FIELDS])
 
     # Decode the polyline
-    decodedPolyline = polyline.decode(
-        response.routes[0].polyline.encoded_polyline)
+    decodedPolyline = polyline.decode(response.routes[0].polyline.encoded_polyline)
 
     # Get route bounds
     bounds = getRouteBounds(decodedPolyline)
@@ -185,8 +178,7 @@ def computeOptimizedRoute(serializer: Union[PreviewRouteSerializer, CreateRouteS
     # [0] is origin, [-1] is destination
     routePoints = {"origin": decodedPolyline[0]}
     for charger in chargersInArea:
-        routePoints[f"{charger['id']}"] = (
-            charger["latitud"], charger["longitud"])
+        routePoints[f"{charger['id']}"] = (charger["latitud"], charger["longitud"])
     routePoints["destination"] = decodedPolyline[-1]
     # print(routePoints)
 
@@ -194,13 +186,14 @@ def computeOptimizedRoute(serializer: Union[PreviewRouteSerializer, CreateRouteS
     possibleRoutes = calculatePossibleRoute(routePoints, autonomy)
     # if len(possibleRoutes) == 1:
     #     possibleRoutes.append(decodedPolyline[0])
-    mapsPayload = buildMapsRouteRequestChargers(
-        possibleRoutes)
+    mapsPayload = buildMapsRouteRequestChargers(possibleRoutes)
     print(mapsPayload)
     request = ComputeRoutesRequest(mapping=mapsPayload)
-    response = GoogleMapsRouteClient.compute_routes(
-        request=request, metadata=[X_GOOGLE_FIELDS])
-    return {"route_data": deserializeMapsRoutesResponse(response), "charger_points": possibleRoutes[1:-2]}
+    response = GoogleMapsRouteClient.compute_routes(request=request, metadata=[X_GOOGLE_FIELDS])
+    return {
+        "route_data": deserializeMapsRoutesResponse(response),
+        "charger_points": possibleRoutes[1:-2],
+    }
 
 
 def getRouteBounds(decodedPolyline: list):
@@ -227,8 +220,7 @@ def getRouteBounds(decodedPolyline: list):
             minLong = coord[1]
 
     # Shouthwest: lower left corner, Northeast: upper right corner
-    bounds = {"southwest": [minLat, minLong],
-              "northeast": [maxLat, maxLong]}
+    bounds = {"southwest": [minLat, minLong], "northeast": [maxLat, maxLong]}
 
     return bounds
 
@@ -241,15 +233,20 @@ def calculateChargerPoints(bounds: dict, chargerTypes: list):
         bounds (dict): The bounds of the route.
     """
     try:
-        chargerTypeObjs = ChargerLocationType.objects.filter(
-            chargerType__in=chargerTypes)
+        chargerTypeObjs = ChargerLocationType.objects.filter(chargerType__in=chargerTypes)
     except ChargerLocationType.DoesNotExist:
         raise ValidationError("Charger type does not exist", 400)
     print(chargerTypeObjs)
     # Get the charger points
     try:
-        chargerPoints = LocationCharger.objects.filter(connectionType__in=chargerTypeObjs, acDc="AC", latitud__gte=bounds["southwest"][
-            0], latitud__lte=bounds["northeast"][0], longitud__gte=bounds["southwest"][1], longitud__lte=bounds["northeast"][1])
+        chargerPoints = LocationCharger.objects.filter(
+            connectionType__in=chargerTypeObjs,
+            acDc="AC",
+            latitud__gte=bounds["southwest"][0],
+            latitud__lte=bounds["northeast"][0],
+            longitud__gte=bounds["southwest"][1],
+            longitud__lte=bounds["northeast"][1],
+        )
     except LocationCharger.DoesNotExist:
         raise ValidationError("Charger points do not exist", 400)
     print(len(chargerPoints))
@@ -263,8 +260,7 @@ def calculatePossibleRoute(routePoints: dict, autonomy: float):
     Args:
         routePoints (dict): The route points.
     """
-    origin_to_destination_distance = distance(
-        routePoints["origin"], routePoints["destination"]).km
+    origin_to_destination_distance = distance(routePoints["origin"], routePoints["destination"]).km
 
     # If the distance is less than the autonomy, return a direct route
     if origin_to_destination_distance <= autonomy:
@@ -287,14 +283,12 @@ def calculatePossibleRoute(routePoints: dict, autonomy: float):
         routeGraph[originPoint] = {}
 
         # Get the indices of the k nearest neighbors
-        neighbors = knn.kneighbors(
-            [routePointsArray[i]], return_distance=False)
+        neighbors = knn.kneighbors([routePointsArray[i]], return_distance=False)
 
         for neighbor in neighbors[0]:
             if neighbor != i:
                 # Calculate the cost to go from originPoint to the neighbor
-                cost = distance(routePoints[originPoint],
-                                routePoints[routePointsList[neighbor]]).km
+                cost = distance(routePoints[originPoint], routePoints[routePointsList[neighbor]]).km
                 routeGraph[originPoint][routePointsList[neighbor]] = cost
 
     # print("routeGraph", routeGraph)
@@ -318,7 +312,7 @@ def dijkstra(graph: dict, start: str, end: str, autonomy: float = 2.5):
     """
 
     # Initialize the distance to every node as infinity, except the start node
-    distances = {node: float('infinity') for node in graph}
+    distances = {node: float("infinity") for node in graph}
     distances[start] = 0
 
     # Initialize the priority queue with the start node
@@ -414,13 +408,11 @@ def joinRoute(routeId: int, passengerId: int, paymentMethodId: str):
         "payment_method_id": paymentMethodId,
         "route_id": routeId,
     }
-    headers = {"Content-Type": "application/json",
-               "Authorization": "Token " + token.key}
+    headers = {"Content-Type": "application/json", "Authorization": "Token " + token.key}
     response = requests.post(url, data=json.dumps(data), headers=headers)
 
     if response.status_code != 200:
-        raise ValidationError(
-            "Payment failed and user did not join the route", 400)
+        raise ValidationError("Payment failed and user did not join the route", 400)
 
     passenger = User.objects.get(id=passengerId)
     route.passengers.add(passenger)
@@ -449,13 +441,11 @@ def leaveRoute(routeId: int, passengerId: int):
         data = {
             "route_id": routeId,
         }
-        headers = {"Content-Type": "application/json",
-                   "Authorization": "Token " + token.key}
+        headers = {"Content-Type": "application/json", "Authorization": "Token " + token.key}
         response = requests.post(url, data=json.dumps(data), headers=headers)
 
         if response.status_code != 200:
-            raise ValidationError(
-                "Refund failed and User did not leave the route", 400)
+            raise ValidationError("Refund failed and User did not leave the route", 400)
 
     route.passengers.remove(User.objects.get(id=passengerId))
 
@@ -481,8 +471,7 @@ def forcedLeaveRoute(routeId: int, passengerId: int):
     data = {
         "route_id": routeId,
     }
-    headers = {"Content-Type": "application/json",
-               "Authorization": "Token " + token.key}
+    headers = {"Content-Type": "application/json", "Authorization": "Token " + token.key}
     requests.post(url, data=json.dumps(data), headers=headers)
 
     # If refund fails, user is still removed from the route.
