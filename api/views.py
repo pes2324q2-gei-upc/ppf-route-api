@@ -59,7 +59,7 @@ class RouteRetrieveView(RetrieveAPIView):
     """
 
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
 
     queryset = Route.objects.all()
     serializer_class = DetaliedRouteSerializer
