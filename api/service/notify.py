@@ -12,15 +12,20 @@ class Notification:
     The class provides static methods to create different types of notifications.
     """
 
-    def __init__(self, title: str, body: str):
+    class Priority(Enum):
+        HIGH = "high"
+        NORMAL = "normal"
+
+    def __init__(self, title: str, body: str, priority: Priority = Priority.NORMAL):
         self.title = title
         self.body = body
+        self.priority = priority
 
     @staticmethod
     def routeStarted(destination: str):
         title = "Route Started"
         body = f"The route to {destination} has started"
-        return Notification(title, body)
+        return Notification(title, body, Notification.Priority.HIGH)
 
     @staticmethod
     def routeEnded(destination: str):
@@ -32,7 +37,7 @@ class Notification:
     def routeCancelled(destination: str):
         title = "Route Canceled"
         body = f"The route to {destination} has been canceled"
-        return Notification(title, body)
+        return Notification(title, body, Notification.Priority.HIGH)
 
     @staticmethod
     def passengerJoined(destination: str):
@@ -47,7 +52,7 @@ class Notification:
         return Notification(title, body)
 
 
-def notify(user: str, title: str, body: str):
+def notify(user: str, title: str, body: str, priority: str):
     """
     Sends a notification to a certain user.
 
@@ -62,7 +67,9 @@ def notify(user: str, title: str, body: str):
     """
     try:
         # Send a http request to user-api to send a notification to a certain user
-        response = post(NOTIFY_API_URL, json={"user": user, "title": title, "body": body})
+        response = post(
+            NOTIFY_API_URL, json={"user": user, "title": title, "body": body, "priority": priority}
+        )
         response.raise_for_status()  # Raise an exception if the request was not successful
     except HTTPError as e:
         # Log the error message if the request fails
@@ -86,7 +93,7 @@ def notifyPassengers(routeId: str, ntf: Notification):
         passengers = route.passengers.all()
         # Notify all passengers
         for passenger in passengers:
-            notify(passenger.pk, ntf.title, ntf.body)
+            notify(passenger.pk, ntf.title, ntf.body, ntf.priority.value)
     else:
         assert False, f"Route with id {routeId} not found"
 
@@ -107,6 +114,6 @@ def notifyDriver(routeId: str, ntf: Notification):
     if route is not None:
         driver = route.driver.pk
         # Notify the driver that a passenger has joined the route
-        notify(driver, ntf.title, ntf.body)
+        notify(driver, ntf.title, ntf.body, ntf.priority.value)
     else:
         assert False, f"Route with id {routeId} not found"
