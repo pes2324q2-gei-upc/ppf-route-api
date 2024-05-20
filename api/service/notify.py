@@ -1,40 +1,50 @@
 from enum import Enum
-from requests import HTTPError, post
 
 from common.models.route import Route
+from requests import HTTPError, post
 
-NOTIFY_API_URL = "http://user-api:8000/api/service/notify"
-
-
-from enum import Enum
+NOTIFY_API_URL = "http://user-api:8000/push/notify"
 
 
-class Notification(Enum):
+class Notification:
     """
-    Enum class representing different types of notifications.
-    Each notification has a title and a body.
-    Body can be formatted with the destination of the route.
+    Represents a notification with a title and body.
+    The class provides static methods to create different types of notifications.
     """
 
-    ROUTE_STARTED = ("Route Started", "The route to {destination} has started")
-    ROUTE_ENDED = ("Route Ended", "The route to {destination} has ended")
-    ROUTE_CANCELLED = ("Route Canceled", "The route to {destination} has been canceled")
-    PASSENGER_JOINED = ("Passenger Joined", "A passenger has joined your route to {destination}")
-    PASSENGER_LEFT = ("Passenger Left", "A passenger has left your route to {destination}")
+    def __init__(self, title: str, body: str):
+        self.title = title
+        self.body = body
 
-    @property
-    def title(self):
-        """
-        Get the title of the notification.
-        """
-        return self.value[0]
+    @staticmethod
+    def routeStarted(destination: str):
+        title = "Route Started"
+        body = f"The route to {destination} has started"
+        return Notification(title, body)
 
-    @property
-    def body(self):
-        """
-        Get the body of the notification.
-        """
-        return self.value[1]
+    @staticmethod
+    def routeEnded(destination: str):
+        title = "Route Ended"
+        body = f"The route to {destination} has ended"
+        return Notification(title, body)
+
+    @staticmethod
+    def routeCancelled(destination: str):
+        title = "Route Canceled"
+        body = f"The route to {destination} has been canceled"
+        return Notification(title, body)
+
+    @staticmethod
+    def passengerJoined(destination: str):
+        title = "Passenger Joined"
+        body = f"A passenger has joined your route to {destination}"
+        return Notification(title, body)
+
+    @staticmethod
+    def passengerLeft(destination: str):
+        title = "Passenger Left"
+        body = f"A passenger has left your route to {destination}"
+        return Notification(title, body)
 
 
 def notify(user: str, title: str, body: str):
@@ -74,9 +84,11 @@ def notifyPassengers(routeId: str, ntf: Notification):
     route: Route | None = Route.objects.get(id=routeId).first()
     if route is not None:
         passengers = route.passengers.all()
-        # Notify all passengers that the route has started
+        # Notify all passengers
         for passenger in passengers:
             notify(passenger.pk, ntf.title, ntf.body)
+    else:
+        assert False, f"Route with id {routeId} not found"
 
 
 def notifyDriver(routeId: str, ntf: Notification):
@@ -95,4 +107,6 @@ def notifyDriver(routeId: str, ntf: Notification):
     if route is not None:
         driver = route.driver.pk
         # Notify the driver that a passenger has joined the route
-        notify(driver, ntf.title, ntf.body.format(destination=route.destinationAlias))
+        notify(driver, ntf.title, ntf.body)
+    else:
+        assert False, f"Route with id {routeId} not found"

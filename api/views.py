@@ -14,6 +14,7 @@ from api.serializers import (
     PaymentMethodSerializer,
     UserSerializer,
 )
+from common.models import route
 from common.models.route import Route
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
@@ -176,7 +177,9 @@ class RouteJoinView(CreateAPIView):
         userId = request.user.id
         validateJoinRoute(routeId, userId)
         joinRoute(routeId, userId, paymentMethodId)
-        notifyDriver(routeId, Notification.PASSENGER_JOINED)
+
+        route = Route.objects.get(id=routeId)
+        notifyDriver(routeId, Notification.passengerJoined(route.destinationAlias))
         return Response({"message": "User successfully joined the route"}, status=HTTP_200_OK)
 
 
@@ -194,7 +197,9 @@ class RouteLeaveView(CreateAPIView):
         routeId = self.kwargs["pk"]
         userId = request.user.id
         leaveRoute(routeId, userId)
-        notifyDriver(routeId, Notification.PASSENGER_LEFT)
+
+        route = Route.objects.get(id=routeId)
+        notifyDriver(routeId, Notification.passengerLeft(route.destinationAlias))
         return Response({"message": "User successfully left the route"}, status=HTTP_200_OK)
 
 
@@ -237,7 +242,7 @@ class RouteCancelView(CreateAPIView):
 
         route.cancelled = True
         route.save()
-        notifyPassengers(route.id, Notification.ROUTE_CANCELLED)
+        notifyPassengers(route.id, Notification.routeCancelled(route.destinationAlias))
         return Response({"message": "Route successfully cancelled"}, status=HTTP_200_OK)
 
 
