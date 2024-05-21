@@ -233,6 +233,10 @@ def kPowerFinder(
     returnedCandidates = []
     for coord in candidatePoints.tolist():
         returnedCandidates.append(tuple(coord))
+
+    # TODO build a structure with the form
+    # given the parameter points and it's type, build a dict with the same structure using the points from returnedCandidates
+
     return returnedCandidates, graph
 
 

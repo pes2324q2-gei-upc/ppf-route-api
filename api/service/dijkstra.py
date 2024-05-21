@@ -1,7 +1,7 @@
 import heapq
 
 
-def dijkstra2(
+def dijkstra(
     graph: dict[str, dict[str, float]], start: str, end: str, autonomy: float = 2.5
 ) -> list:
     """
@@ -21,8 +21,8 @@ def dijkstra2(
     distances = {node: float("infinity") for node in graph}
     distances[start] = 0
 
-    queue = [(0, start)]
-    parents = {node: None for node in graph}
+    queue = [(0.0, start)]
+    parents = {node: "" for node in graph}
 
     while queue:
         # Get the node with the smallest distance
@@ -47,7 +47,7 @@ def dijkstra2(
     # Build the path from start to end
     path: list = []
     current_node = end
-    while current_node is not None:
+    while current_node is not "":
         path.append(current_node)
         current_node = parents[current_node]
     path.reverse()

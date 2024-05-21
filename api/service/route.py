@@ -6,9 +6,11 @@ import polyline
 import requests
 from api import GoogleMapsRouteClient
 from api.serializers import CreateRouteSerializer, PreviewRouteSerializer
+from api.service.kPowerFinder import kPowerFinder
 from common.models.charger import ChargerLocationType, LocationCharger
 from common.models.route import Route
 from common.models.user import Driver, User
+from api.service.dijkstra import dijkstra
 
 # Dont remove, it is use for migrate well
 from django.utils import timezone
@@ -17,7 +19,6 @@ from google.maps.routing_v2 import ComputeRoutesRequest, ComputeRoutesResponse
 from google.maps.routing_v2 import Route as GRoute
 from rest_framework.authtoken.models import Token
 from rest_framework.exceptions import ValidationError
-from api.service.kPowerFinder import kPowerFinder
 
 X_GOOGLE_FIELDS = (
     "x-goog-fieldmask",
@@ -267,10 +268,10 @@ def calculatePossibleRoute(routePoints: dict[str, tuple[float, float]], autonomy
         autonomy,
         routePoints,
     )
+    # TODO build routeGraph from points and graph, maybe do it in kPowerFinder function
 
-    # TODO transform points and graph to suitable format or change dijkstra function, whaterever is easier
-    # order = dijkstra(routeGraph, "origin", "destination", autonomy)
-    order = []
+    routeGraph = {}
+    order = dijkstra(routeGraph, "origin", "destination", autonomy)
     routeLangLong = []
     for point in order:
         routeLangLong.append(routePoints[point])
