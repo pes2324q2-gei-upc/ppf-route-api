@@ -2,7 +2,6 @@ import heapq
 import json
 from typing import Union
 
-import numpy as np
 import polyline
 import requests
 from api import GoogleMapsRouteClient
@@ -18,7 +17,7 @@ from google.maps.routing_v2 import ComputeRoutesRequest, ComputeRoutesResponse
 from google.maps.routing_v2 import Route as GRoute
 from rest_framework.authtoken.models import Token
 from rest_framework.exceptions import ValidationError
-from sklearn.neighbors import NearestNeighbors
+from api.service.kPowerFinder import kPowerFinder
 
 X_GOOGLE_FIELDS = (
     "x-goog-fieldmask",
@@ -253,6 +252,10 @@ def calculateChargerPoints(bounds: dict, chargerTypes: list):
     return list(chargerPoints.values())
 
 
+def vectDistance(point1: list[float], point2: list[float]):
+    return distance(list(point1), list(point2)).kilometers
+
+
 def calculatePossibleRoute(routePoints: dict, autonomy: float):
     """
     Returns the possible routes based on the charger points.
@@ -260,40 +263,21 @@ def calculatePossibleRoute(routePoints: dict, autonomy: float):
     Args:
         routePoints (dict): The route points.
     """
+    # TODO move this check outside and compare autonomy with distance returned by google maps, it's more accurate
     origin_to_destination_distance = distance(routePoints["origin"], routePoints["destination"]).km
-
     # If the distance is less than the autonomy, return a direct route
     if origin_to_destination_distance <= autonomy:
         return [routePoints["origin"], routePoints["destination"]]
 
-    # Convert the route points to a numpy array
-    routePointsArray = np.array(list(routePoints.values()))
-
-    # Use the NearestNeighbors class from sklearn to find the k nearest neighbors
-    # Adjust the number of neighbors as needed
-    n_neighbors = min(100, len(routePointsArray) - 1)
-    knn = NearestNeighbors(n_neighbors=n_neighbors)
-    knn.fit(routePointsArray)
-
-    routeGraph = {}
-    # Create a list of keys from routePoints
-    routePointsList = list(routePoints.keys())
-
-    for i, originPoint in enumerate(routePointsList):
-        routeGraph[originPoint] = {}
-
-        # Get the indices of the k nearest neighbors
-        neighbors = knn.kneighbors([routePointsArray[i]], return_distance=False)
-
-        for neighbor in neighbors[0]:
-            if neighbor != i:
-                # Calculate the cost to go from originPoint to the neighbor
-                cost = distance(routePoints[originPoint], routePoints[routePointsList[neighbor]]).km
-                routeGraph[originPoint][routePointsList[neighbor]] = cost
-
-    # print("routeGraph", routeGraph)
-    # print("dijkstra", dijkstra(routeGraph, "origin", "destination"))
-    order = dijkstra(routeGraph, "origin", "destination", autonomy)
+    # Dijkstra candidate points and a distance matrix between them
+    # hint: check the types
+    points, graph = kPowerFinder(
+        autonomy,
+        routePoints,
+    )
+    # TODO transform points and graph to suitable format or change dijkstra function, whaterever is easier
+    # order = dijkstra(routeGraph, "origin", "destination", autonomy)
+    order = []
     routeLangLong = []
     for point in order:
         routeLangLong.append(routePoints[point])
