@@ -55,6 +55,13 @@ from .service.route import (
     validateJoinRoute,
 )
 
+# Don't delete, needed to create db with models
+from common.models.charger import ChargerLocationType, ChargerVelocity, ChargerLocationType
+from common.models.achievement import Achievement, UserAchievementProgress
+
+from math import radians, cos, sin, sqrt, atan2
+from common.models.charger import LocationCharger
+
 
 class RouteRetrieveView(RetrieveAPIView):
     """
@@ -64,7 +71,7 @@ class RouteRetrieveView(RetrieveAPIView):
     """
 
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
 
     queryset = Route.objects.all()
     serializer_class = DetaliedRouteSerializer

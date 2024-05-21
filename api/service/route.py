@@ -209,19 +209,13 @@ def getRouteBounds(decodedPolyline: list):
     maxLong = decodedPolyline[0][1]
 
     for coord in decodedPolyline:
-        if coord[0] > maxLat:
-            maxLat = coord[0]
-        if coord[0] < minLat:
-            minLat = coord[0]
-        if coord[1] > maxLong:
-            maxLong = coord[1]
-        if coord[1] < minLong:
-            minLong = coord[1]
+        maxLat = max(maxLat, coord[0])
+        minLat = min(minLat, coord[0])
+        maxLong = max(maxLong, coord[1])
+        minLong = min(minLong, coord[1])
 
     # Shouthwest: lower left corner, Northeast: upper right corner
-    bounds = {"southwest": [minLat, minLong], "northeast": [maxLat, maxLong]}
-
-    return bounds
+    return {"southwest": [minLat, minLong], "northeast": [maxLat, maxLong]}
 
 
 def calculateChargerPoints(bounds: dict, chargerTypes: list):
@@ -235,7 +229,6 @@ def calculateChargerPoints(bounds: dict, chargerTypes: list):
         chargerTypeObjs = ChargerLocationType.objects.filter(chargerType__in=chargerTypes)
     except ChargerLocationType.DoesNotExist:
         raise ValidationError("Charger type does not exist", 400)
-    print(chargerTypeObjs)
     # Get the charger points
     try:
         chargerPoints = LocationCharger.objects.filter(
@@ -248,7 +241,6 @@ def calculateChargerPoints(bounds: dict, chargerTypes: list):
         )
     except LocationCharger.DoesNotExist:
         raise ValidationError("Charger points do not exist", 400)
-    print(len(chargerPoints))
     return list(chargerPoints.values())
 
 
@@ -256,7 +248,7 @@ def vectDistance(point1: list[float], point2: list[float]):
     return distance(list(point1), list(point2)).kilometers
 
 
-def calculatePossibleRoute(routePoints: dict, autonomy: float):
+def calculatePossibleRoute(routePoints: dict[str, tuple[float, float]], autonomy: float):
     """
     Returns the possible routes based on the charger points.
 
@@ -275,6 +267,7 @@ def calculatePossibleRoute(routePoints: dict, autonomy: float):
         autonomy,
         routePoints,
     )
+
     # TODO transform points and graph to suitable format or change dijkstra function, whaterever is easier
     # order = dijkstra(routeGraph, "origin", "destination", autonomy)
     order = []
@@ -282,58 +275,6 @@ def calculatePossibleRoute(routePoints: dict, autonomy: float):
     for point in order:
         routeLangLong.append(routePoints[point])
     return routeLangLong
-
-
-def dijkstra(graph: dict, start: str, end: str, autonomy: float = 2.5):
-    """
-    Returns the shortest path and distance from the start to the end node in the graph.
-
-    Args:
-        graph (dict): The graph.
-        start (str): The start node.
-        end (str): The end node.
-        autonomy (float): The autonomy in kilometers.
-    """
-
-    # Initialize the distance to every node as infinity, except the start node
-    distances = {node: float("infinity") for node in graph}
-    distances[start] = 0
-
-    # Initialize the priority queue with the start node
-    queue = [(0, start)]
-
-    # Initialize the parent dictionary
-    parents = {node: None for node in graph}
-
-    while queue:
-        # Get the node with the smallest distance
-        current_distance, current_node = heapq.heappop(queue)
-
-        # If the current distance is larger than the stored distance, skip this node
-        if current_distance > distances[current_node]:
-            continue
-
-        # If the current node is the end node, break the loop
-        if current_node == end:
-            break
-
-        # Update the distances to the neighboring nodes
-        for neighbor, weight in graph[current_node].items():
-            distance = current_distance + weight
-            if distance < distances[neighbor] and weight <= autonomy:
-                distances[neighbor] = distance
-                parents[neighbor] = current_node
-                heapq.heappush(queue, (distance, neighbor))
-
-    # Build the path from start to end
-    path = []
-    current_node = end
-    while current_node is not None:
-        path.append(current_node)
-        current_node = parents[current_node]
-    path.reverse()
-
-    return path
 
 
 def validateJoinRoute(routeId: int, passengerId: int):

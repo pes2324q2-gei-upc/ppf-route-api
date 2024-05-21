@@ -1,8 +1,9 @@
-from django.db.models import Q
+from django.db.models import Q, FloatField, Value, Case, When
 from django_filters import FilterSet
 from common.models.route import Route
 from rest_framework.pagination import PageNumberPagination
 from datetime import datetime, timedelta
+from haversine import haversine, Unit
 
 from django_filters import CharFilter
 
@@ -27,11 +28,8 @@ class BaseRouteFilter(FilterSet):
         lookup_expr="icontains",
         label="Destination alias",
     )
-    origin = CharFilter(
-        field_name="originAlias", lookup_expr="icontains", label="Origin alias"
-    )
-    date = CharFilter(method="dateFilter",
-                      label="Date of the route (YYYY-MM-DD)")
+    origin = CharFilter(field_name="originAlias", lookup_expr="icontains", label="Origin alias")
+    date = CharFilter(method="dateFilter", label="Date of the route (YYYY-MM-DD)")
 
     def dateFilter(self, queryset, name, value):
         try:
@@ -50,6 +48,64 @@ class BaseRouteFilter(FilterSet):
 
     def userFilter(self, queryset, name, value):
         return queryset.filter(Q(driver__id=value) | Q(passengers__id__in=value))
+
+    radius = 50  # Radius in kilometers
+
+    location = CharFilter(
+        method="location_filter",
+        label="Origin and destination coordinates separated by ',' (originLat, originLon, destLat, destLon)",
+    )
+
+    def location_filter(self, queryset, name, value):
+        """
+        The queryset is all the routes within the radius of the origin and destination coordinates.
+        """
+        origin_lat, origin_lon, dest_lat, dest_lon = map(float, value.split(","))
+        routes = list(queryset)
+
+        # Calculate the distance with haversine formula
+        filtered_routes = []
+        for route in routes:
+            originDistance = haversine(
+                (origin_lat, origin_lon), (route.originLat, route.originLon), unit=Unit.KILOMETERS
+            )
+            destinationDistance = haversine(
+                (dest_lat, dest_lon),
+                (route.destinationLat, route.destinationLon),
+                unit=Unit.KILOMETERS,
+            )
+            if originDistance <= self.radius and destinationDistance <= self.radius:
+                route.originDistance = originDistance
+                route.destinationDistance = destinationDistance
+                filtered_routes.append(route)
+
+        if not filtered_routes:  # No routes within the radius
+            return queryset.none()
+
+        # Filter using the filtered_routes found. This creates a queryset
+        filtered_ids = [route.id for route in filtered_routes]
+        filtered_queryset = queryset.filter(id__in=filtered_ids)
+
+        # Case and When used to do conditional queries on the queryset
+        origin_distance_annotation = Case(
+            *[When(id=route.id, then=Value(route.originDistance)) for route in filtered_routes],
+            output_field=FloatField(),
+        )
+        destination_distance_annotation = Case(
+            *[
+                When(id=route.id, then=Value(route.destinationDistance))
+                for route in filtered_routes
+            ],
+            output_field=FloatField(),
+        )
+
+        # Add dinamically the origin and destination distances to the queryset
+        filtered_queryset = filtered_queryset.annotate(
+            originDistance=origin_distance_annotation,
+            destinationDistance=destination_distance_annotation,
+        )
+
+        return filtered_queryset
 
     class Meta:
         model = Route
