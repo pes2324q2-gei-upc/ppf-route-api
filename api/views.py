@@ -3,54 +3,57 @@ This module contains the views for the API endpoints related to routes.
 - TODO: See how exceptions are handled by the framework
 """
 
+from math import atan2, cos, radians, sin, sqrt
 from typing import Union
+
 from api.serializers import (
     CreateRouteSerializer,
     DetaliedRouteSerializer,
     ListRouteSerializer,
-    PreviewRouteSerializer,
     LocationChargerSerializer,
     PaymentMethodSerializer,
+    PreviewRouteSerializer,
     UserSerializer,
 )
+
+# Don't delete, needed to create db with models
+from common.models.charger import (
+    ChargerLocationType,
+    ChargerVelocity,
+    LocationCharger,
+)
 from common.models.route import Route
+from common.models.user import Driver
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.authentication import TokenAuthentication
+from rest_framework.exceptions import ValidationError
 from rest_framework.generics import (
     CreateAPIView,
+    ListAPIView,
     ListCreateAPIView,
     RetrieveAPIView,
-    ListAPIView,
 )
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
-from rest_framework.exceptions import ValidationError
 from rest_framework.status import (
     HTTP_200_OK,
     HTTP_201_CREATED,
     HTTP_400_BAD_REQUEST,
     HTTP_403_FORBIDDEN,
     HTTP_404_NOT_FOUND,
-    HTTP_500_INTERNAL_SERVER_ERROR
+    HTTP_500_INTERNAL_SERVER_ERROR,
 )
-from common.models.user import Driver
+
 from .service.route import (
     computeMapsRoute,
     computeOptimizedRoute,
+    forcedLeaveRoute,
     joinRoute,
     leaveRoute,
     validateJoinRoute,
-    forcedLeaveRoute,
 )
-
-# Don't delete, needed to create db with models
-from common.models.charger import ChargerLocationType, ChargerVelocity, ChargerLocationType
-
-
-from math import radians, cos, sin, sqrt, atan2
-from common.models.charger import LocationCharger
 
 
 class RouteRetrieveView(RetrieveAPIView):
@@ -252,12 +255,9 @@ class NearbyChargersView(ListAPIView):
 
     @swagger_auto_schema(
         manual_parameters=[
-            openapi.Parameter("latitud", openapi.IN_QUERY,
-                              type=openapi.TYPE_NUMBER),
-            openapi.Parameter("longitud", openapi.IN_QUERY,
-                              type=openapi.TYPE_NUMBER),
-            openapi.Parameter("radio_km", openapi.IN_QUERY,
-                              type=openapi.TYPE_NUMBER),
+            openapi.Parameter("latitud", openapi.IN_QUERY, type=openapi.TYPE_NUMBER),
+            openapi.Parameter("longitud", openapi.IN_QUERY, type=openapi.TYPE_NUMBER),
+            openapi.Parameter("radio_km", openapi.IN_QUERY, type=openapi.TYPE_NUMBER),
         ]
     )
     def get(self, request, *args, **kwargs):
@@ -276,21 +276,18 @@ class NearbyChargersView(ListAPIView):
 
     def get_queryset(self):
         # get_queryset is called just if three parameters are provided
-        latitud = float(self.request.query_params.get(
-            "latitud"))  # type: ignore
-        longitud = float(self.request.query_params.get(
-            "longitud"))  # type: ignore
-        radio = float(self.request.query_params.get(
-            "radio_km"))  # type: ignore
+        latitud = float(self.request.query_params.get("latitud"))  # type: ignore
+        longitud = float(self.request.query_params.get("longitud"))  # type: ignore
+        radio = float(self.request.query_params.get("radio_km"))  # type: ignore
 
         queryset = LocationCharger.objects.all()
         cargadores_cercanos = []
 
         for cargador in queryset:
+            # TODO can we get this out of the controller?
             # Apply the haversine formula to calculate the distance between two points
             lat1, lon1, lat2, lon2 = map(
-                radians, [latitud, longitud,
-                          cargador.latitud, cargador.longitud]
+                radians, [latitud, longitud, cargador.latitud, cargador.longitud]
             )
             dlon = lon2 - lon1
             dlat = lat2 - lat1
