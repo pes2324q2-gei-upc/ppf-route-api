@@ -4,7 +4,7 @@ from scipy.sparse import csr_matrix
 from geopy.distance import distance
 import numpy as np
 from typing import Any, Tuple
-from dijkstra import dijkstra
+from api.service.dijkstra import dijkstra
 origin = (41.11364, 1.22503)
 waypoints = {
     "69": (41.38553, 2.19359),

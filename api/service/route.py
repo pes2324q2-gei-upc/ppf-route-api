@@ -1,6 +1,6 @@
 import heapq
 import json
-from typing import Union
+from typing import Union, final
 
 import polyline
 import requests
@@ -174,29 +174,37 @@ def computeOptimizedRoute(
     decodedPolyline = polyline.decode(
         response.routes[0].polyline.encoded_polyline)
 
-    # Get route bounds
-    bounds = getRouteBounds(decodedPolyline)
     user = Driver.objects.get(id=driverId)
-    # Convert ManyToManyRelatedManager to list
-    driverChargerTypes = list(user.chargerTypes.all())
-    chargersInArea = calculateChargerPoints(bounds, driverChargerTypes)
-    # print(chargersInArea)
-
-    # Create list with possible route points
-    # [0] is origin, [-1] is destination
-    routePoints = {"origin": decodedPolyline[0]}
-    for charger in chargersInArea:
-        routePoints[f"{charger['id']}"] = (
-            charger["latitud"], charger["longitud"])
-    routePoints["destination"] = decodedPolyline[-1]
-    # print(routePoints)
-
     autonomy = user.autonomy  # type: ignore
-    finalRoute = calculatePossibleRoute(routePoints, autonomy)
-    # if len(possibleRoutes) == 1:
-    #     possibleRoutes.append(decodedPolyline[0])
+
+    finalRoute = []
+    origin_to_destination_distance = distance(
+        decodedPolyline[0], decodedPolyline[-1]).km
+
+    # If the distance is less than the autonomy, return a direct route
+    if origin_to_destination_distance <= autonomy:
+        finalRoute.append(decodedPolyline[0])
+        finalRoute.append(decodedPolyline[-1])
+
+    else:
+        # Get route bounds
+        bounds = getRouteBounds(decodedPolyline)
+
+        # Convert ManyToManyRelatedManager to list
+        driverChargerTypes = list(user.chargerTypes.all())
+        chargersInArea = calculateChargerPoints(bounds, driverChargerTypes)
+
+        # Create list with possible route points
+        # [0] is origin, [-1] is destination
+        routePoints = {"origin": decodedPolyline[0]}
+        for charger in chargersInArea:
+            routePoints[f"{charger['id']}"] = (
+                charger["latitud"], charger["longitud"])
+        routePoints["destination"] = decodedPolyline[-1]
+
+        finalRoute = calculatePossibleRoute(routePoints, autonomy)
+
     mapsPayload = buildMapsRouteRequestChargers(finalRoute)
-    print(mapsPayload)
     request = ComputeRoutesRequest(mapping=mapsPayload)
     response = GoogleMapsRouteClient.compute_routes(
         request=request, metadata=[X_GOOGLE_FIELDS])
@@ -245,7 +253,6 @@ def calculateChargerPoints(bounds: dict, chargerTypes: list):
     try:
         chargerPoints = LocationCharger.objects.filter(
             connectionType__in=chargerTypeObjs,
-            acDc="AC",
             latitud__gte=bounds["southwest"][0],
             latitud__lte=bounds["northeast"][0],
             longitud__gte=bounds["southwest"][1],
@@ -267,13 +274,6 @@ def calculatePossibleRoute(routePoints: dict[str, tuple[float, float]], autonomy
     Args:
         routePoints (dict): The route points.
     """
-    # TODO move this check outside and compare autonomy with distance returned by google maps, it's more accurate
-    origin_to_destination_distance = distance(
-        routePoints["origin"], routePoints["destination"]).km
-    # If the distance is less than the autonomy, return a direct route
-    if origin_to_destination_distance <= autonomy:
-        return [routePoints["origin"], routePoints["destination"]]
-
     # Dijkstra candidate points and a distance matrix between them
     # hint: check the types
     returnedCandidates, graph = kPowerFinder(
@@ -281,12 +281,13 @@ def calculatePossibleRoute(routePoints: dict[str, tuple[float, float]], autonomy
         routePoints,
     )
     dijkstraGraph = prepareForDijkstra(returnedCandidates, graph)
+
     finalPoints = dijkstra(dijkstraGraph, "0", str(
         len(returnedCandidates) - 1), autonomy)
 
     finalPath = []
-    for i in range(len(finalPath)):
-        finalPath[i] = returnedCandidates[int(finalPoints[i])]
+    for point in finalPoints:
+        finalPath.append(returnedCandidates[int(point)])
     return finalPath
 
 
