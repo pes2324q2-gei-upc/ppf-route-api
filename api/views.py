@@ -4,6 +4,9 @@ This module contains the views for the API endpoints related to routes.
 """
 
 from typing import Union
+
+from django.shortcuts import get_object_or_404
+import requests
 from api.serializers import (
     CreateRouteSerializer,
     DetaliedRouteSerializer,
@@ -250,9 +253,12 @@ class NearbyChargersView(ListAPIView):
 
     @swagger_auto_schema(
         manual_parameters=[
-            openapi.Parameter("latitud", openapi.IN_QUERY, type=openapi.TYPE_NUMBER),
-            openapi.Parameter("longitud", openapi.IN_QUERY, type=openapi.TYPE_NUMBER),
-            openapi.Parameter("radio_km", openapi.IN_QUERY, type=openapi.TYPE_NUMBER),
+            openapi.Parameter("latitud", openapi.IN_QUERY,
+                              type=openapi.TYPE_NUMBER),
+            openapi.Parameter("longitud", openapi.IN_QUERY,
+                              type=openapi.TYPE_NUMBER),
+            openapi.Parameter("radio_km", openapi.IN_QUERY,
+                              type=openapi.TYPE_NUMBER),
         ]
     )
     def get(self, request, *args, **kwargs):
@@ -271,9 +277,12 @@ class NearbyChargersView(ListAPIView):
 
     def get_queryset(self):
         # get_queryset is called just if three parameters are provided
-        latitud = float(self.request.query_params.get("latitud"))  # type: ignore
-        longitud = float(self.request.query_params.get("longitud"))  # type: ignore
-        radio = float(self.request.query_params.get("radio_km"))  # type: ignore
+        latitud = float(self.request.query_params.get(
+            "latitud"))  # type: ignore
+        longitud = float(self.request.query_params.get(
+            "longitud"))  # type: ignore
+        radio = float(self.request.query_params.get(
+            "radio_km"))  # type: ignore
 
         queryset = LocationCharger.objects.all()
         cargadores_cercanos = []
@@ -281,7 +290,8 @@ class NearbyChargersView(ListAPIView):
         for cargador in queryset:
             # Apply the haversine formula to calculate the distance between two points
             lat1, lon1, lat2, lon2 = map(
-                radians, [latitud, longitud, cargador.latitud, cargador.longitud]
+                radians, [latitud, longitud,
+                          cargador.latitud, cargador.longitud]
             )
             dlon = lon2 - lon1
             dlat = lat2 - lat1
@@ -313,3 +323,35 @@ class RoutePassengersList(RetrieveAPIView):
         passengers = route.passengers.all()
         serializer = self.get_serializer(passengers, many=True)
         return Response(serializer.data)
+
+
+class LicitacioService(CreateAPIView):
+    """
+    Create a new bid for a route using the charger Id
+    URI:
+    - POST /licitacion
+    """
+
+    def post(self, request, pk, *args, **kwargs):
+        url = "https://licitapp-back-f4zi3ert5q-oa.a.run.app/licitacions/licitacio"
+        charger = get_object_or_404(LocationCharger, pk=pk)
+        data = {
+            "latitud": charger.latitud,
+            "longitud": charger.longitud,
+            "nom_organ": charger.promotorGestor,
+            "tipus": "Servei",
+            "procediment": "Obert",
+            "fase_publicacio": "Formalització",
+            "denominacio": "Servei de recàrrega de vehicles elèctrics",
+            "lloc_execucio": charger.adreA,
+            "nom_ambit": "PowerPathFinder",
+            "pressupost": 3.69,
+        }
+        headers = {"Content-Type": "application/json"}
+        response = requests.post(url, json=data, headers=headers)
+
+        if response.status_code == 201:
+            return Response({"message": "Licitacion created successfully"}, status=HTTP_201_CREATED)
+
+        else:
+            return Response({"message": f"Error creating the licitacion {response.status_code}"})
