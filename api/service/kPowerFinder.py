@@ -1,3 +1,10 @@
+import time
+from sklearn.neighbors import NearestNeighbors
+from scipy.sparse import csr_matrix
+from geopy.distance import distance
+import numpy as np
+from typing import Any, Tuple
+from dijkstra import dijkstra
 origin = (41.11364, 1.22503)
 waypoints = {
     "69": (41.38553, 2.19359),
@@ -108,14 +115,6 @@ points = {
     **waypoints,
 }
 
-from typing import Any, Tuple
-
-import numpy as np
-from geopy.distance import distance
-from scipy.sparse import csr_matrix
-from sklearn.neighbors import NearestNeighbors
-import time
-
 
 def toPointMatrix(points: dict[str, tuple[float, float]]):
     return np.array(list(points.values()))
@@ -157,7 +156,7 @@ def kPowerFinder(
             the number of possible paths and hence the chance of finding the best path.
 
     Returns:
-        Tuple[np.ndarray[Any, Any], csr_matrix]: A tuple containing the candidate points and the
+        List of Tuple[np.ndarray[Any, Any], csr_matrix]: A tuple containing the candidate points and the
             distance graph between them.
 
     Raises:
@@ -173,12 +172,14 @@ def kPowerFinder(
     origin = points["origin"]
     destination = points["destination"]
     if origin is None or destination is None:
-        raise ValueError("'points' does not contain 'origin' or 'destination' keys")
+        raise ValueError(
+            "'points' does not contain 'origin' or 'destination' keys")
     candidatePoints: np.ndarray = np.ndarray((1, 2), buffer=np.array([origin]))
 
     while destination not in candidatePoints:
         # Search neighbors that are reachable from a reduced autonomy
-        knn = NearestNeighbors(radius=autonomy, metric=vectDistance).fit(pointMatrix)
+        knn = NearestNeighbors(
+            radius=autonomy, metric=vectDistance).fit(pointMatrix)
         reachable = knn.radius_neighbors_graph(
             [np.array(list(origin))], radius=autonomy, mode="distance", sort_results=True
         )
@@ -191,7 +192,8 @@ def kPowerFinder(
             # get the points from ¬R ∩ R' [¬(reachable) ∩ (reachablePrime)]
             # basically the points further than 'autonomy2' but lower than 'autonomy'
             result = np.setdiff1d(
-                reachable.indices, np.intersect1d(reachable.indices, reachablePrime.indices), True
+                reachable.indices, np.intersect1d(
+                    reachable.indices, reachablePrime.indices), True
             )
             if len(result) > 0:
                 # when we one or more points that satisfy the set operation get the nearest point
@@ -204,10 +206,12 @@ def kPowerFinder(
 
                 if slim:
                     # if slim is set we add only the nearest point to the destination as a candidate
-                    candidatePoints = np.append(candidatePoints, [origin], axis=0)
+                    candidatePoints = np.append(
+                        candidatePoints, [origin], axis=0)
                 else:
                     # if slim is not set we add all the points that satisfy the set operation
-                    candidatePoints = np.append(candidatePoints, pointMatrix[result], axis=0)
+                    candidatePoints = np.append(
+                        candidatePoints, pointMatrix[result], axis=0)
 
                 # we get rid of the initially reachable points as we don't want to consider them
                 # again. This allows us to progress towards the destination
@@ -217,7 +221,8 @@ def kPowerFinder(
                 # if not the destination is unreachable
                 if len(pointMatrix) == 1:
                     if pointMatrix[0].tolist() == list(destination):
-                        candidatePoints = np.append(candidatePoints, pointMatrix, axis=0)
+                        candidatePoints = np.append(
+                            candidatePoints, pointMatrix, axis=0)
                     else:
                         raise ValueError("Destination is unreachable")
                 break
@@ -226,7 +231,8 @@ def kPowerFinder(
             # TODO there might be safer break conditions
             if autonomy2 <= 0:
                 raise ValueError("Destination is unreachable")
-    candidateKnn = NearestNeighbors(radius=autonomy, metric=vectDistance).fit(candidatePoints)
+    candidateKnn = NearestNeighbors(
+        radius=autonomy, metric=vectDistance).fit(candidatePoints)
     graph: csr_matrix = candidateKnn.radius_neighbors_graph(mode="distance")
 
     # convert from np.ndarray to list of tuples
@@ -238,6 +244,26 @@ def kPowerFinder(
     # given the parameter points and it's type, build a dict with the same structure using the points from returnedCandidates
 
     return returnedCandidates, graph
+
+
+def prepareForDijkstra(returnedCandidates, graph):
+    """
+    Prepares the data to be used in the dijkstra function.
+
+    Args:
+        returnedCandidates (list): A list of candidate points.
+        graph (csr_matrix): The distance graph between the candidate points.
+
+    Returns:
+        dict: A dictionary with the candidate points and the graph in the format expected by the dijkstra function.
+    """
+    dijkstraGraph = {}
+    for i, point in enumerate(returnedCandidates):
+        dijkstraGraph[str(i)] = {}
+        for j, distance in enumerate(graph[i].toarray()[0]):
+            if distance > 0:
+                dijkstraGraph[str(i)][str(j)] = distance
+    return dijkstraGraph
 
 
 if __name__ == "__main__":
@@ -263,9 +289,15 @@ if __name__ == "__main__":
                     for _ in range(5):
                         start_time = time.time()
                         try:
-                            kPowerFinder(autonomy, points, deviation, reduction, slim)
+                            returnedCandidates, graph = kPowerFinder(autonomy, points,
+                                                                     deviation, reduction, slim)
+                            dijkstraGraph = prepareForDijkstra(
+                                returnedCandidates, graph)
+                            finalPath = dijkstra(
+                                dijkstraGraph, "0", str(len(returnedCandidates) - 1), autonomy)
                         except ValueError as e:
-                            print(f"Falied for {autonomy}, {deviation}, {reduction}, {slim}")
+                            print(f"Falied for {autonomy}, {
+                                  deviation}, {reduction}, {slim}")
                             broke = True
                             break
                         end_time = time.time()
@@ -278,4 +310,5 @@ if __name__ == "__main__":
                     times.remove(min(times))
                     # Calculate the average execution time
                     average_time = round(sum(times) / len(times), 4)
-                    print(f"{autonomy}\t\t{deviation}\t\t{reduction}\t\t{slim}\t{average_time}")
+                    print(f"{autonomy}\t\t{deviation}\t\t{
+                          reduction}\t\t{slim}\t{average_time}")
