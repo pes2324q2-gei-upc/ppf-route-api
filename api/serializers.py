@@ -72,7 +72,8 @@ class ListRouteSerializer(ModelSerializer):
     driver = UserListSerializer(many=False, read_only=True)
     passengers = UserListSerializer(many=True, read_only=True)
     originDistance = serializers.FloatField(read_only=True, required=False)
-    destinationDistance = serializers.FloatField(read_only=True, required=False)
+    destinationDistance = serializers.FloatField(
+        read_only=True, required=False)
 
     class Meta:
         model = Route
@@ -89,6 +90,7 @@ class ListRouteSerializer(ModelSerializer):
             "passengers",
             "originDistance",
             "destinationDistance",
+            "finalized",
         ]
 
 
