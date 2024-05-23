@@ -43,7 +43,7 @@ from rest_framework.status import (
     HTTP_400_BAD_REQUEST,
     HTTP_403_FORBIDDEN,
     HTTP_404_NOT_FOUND,
-    HTTP_500_INTERNAL_SERVER_ERROR,
+    HTTP_409_CONFLICT,
 )
 
 from .service.route import (
@@ -97,8 +97,11 @@ class RoutePreviewView(CreateAPIView):
             return Response(status=HTTP_400_BAD_REQUEST)
 
         # Compute the route and return it
-        preview = computeOptimizedRoute(serializer, request.user.id)
+        try:
+            preview = computeOptimizedRoute(serializer, request.user.id)
 
+        except Exception as e:
+            return Response({"error": str(e)}, status=HTTP_409_CONFLICT)
         # TODO cache the route, maybe use a hash of the coordinates as the key
 
         return Response(preview, status=HTTP_200_OK)
@@ -262,9 +265,12 @@ class NearbyChargersView(ListAPIView):
 
     @swagger_auto_schema(
         manual_parameters=[
-            openapi.Parameter("latitud", openapi.IN_QUERY, type=openapi.TYPE_NUMBER),
-            openapi.Parameter("longitud", openapi.IN_QUERY, type=openapi.TYPE_NUMBER),
-            openapi.Parameter("radio_km", openapi.IN_QUERY, type=openapi.TYPE_NUMBER),
+            openapi.Parameter("latitud", openapi.IN_QUERY,
+                              type=openapi.TYPE_NUMBER),
+            openapi.Parameter("longitud", openapi.IN_QUERY,
+                              type=openapi.TYPE_NUMBER),
+            openapi.Parameter("radio_km", openapi.IN_QUERY,
+                              type=openapi.TYPE_NUMBER),
         ]
     )
     def get(self, request, *args, **kwargs):
@@ -283,9 +289,12 @@ class NearbyChargersView(ListAPIView):
 
     def get_queryset(self):
         # get_queryset is called just if three parameters are provided
-        latitud = float(self.request.query_params.get("latitud"))  # type: ignore
-        longitud = float(self.request.query_params.get("longitud"))  # type: ignore
-        radio = float(self.request.query_params.get("radio_km"))  # type: ignore
+        latitud = float(self.request.query_params.get(
+            "latitud"))  # type: ignore
+        longitud = float(self.request.query_params.get(
+            "longitud"))  # type: ignore
+        radio = float(self.request.query_params.get(
+            "radio_km"))  # type: ignore
 
         queryset = LocationCharger.objects.all()
         cargadores_cercanos = []
@@ -294,7 +303,8 @@ class NearbyChargersView(ListAPIView):
             # TODO can we get this out of the controller?
             # Apply the haversine formula to calculate the distance between two points
             lat1, lon1, lat2, lon2 = map(
-                radians, [latitud, longitud, cargador.latitud, cargador.longitud]
+                radians, [latitud, longitud,
+                          cargador.latitud, cargador.longitud]
             )
             dlon = lon2 - lon1
             dlat = lat2 - lat1

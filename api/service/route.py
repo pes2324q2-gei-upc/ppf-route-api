@@ -2,6 +2,7 @@ import heapq
 import json
 from typing import Union, final
 
+from httplib2 import Response
 import polyline
 import requests
 from api import GoogleMapsRouteClient
@@ -177,6 +178,9 @@ def computeOptimizedRoute(
     user = Driver.objects.get(id=driverId)
     autonomy = user.autonomy  # type: ignore
 
+    if autonomy <= 0:
+        raise ValidationError("Autonomy must be greater than 0", 409)
+
     finalRoute = []
     origin_to_destination_distance = distance(
         decodedPolyline[0], decodedPolyline[-1]).km
@@ -276,10 +280,14 @@ def calculatePossibleRoute(routePoints: dict[str, tuple[float, float]], autonomy
     """
     # Dijkstra candidate points and a distance matrix between them
     # hint: check the types
-    returnedCandidates, graph = kPowerFinder(
-        autonomy,
-        routePoints,
-    )
+    try:
+        returnedCandidates, graph = kPowerFinder(
+            autonomy,
+            routePoints,
+        )
+    except ValueError:
+        raise ValidationError("Can't reach destination with car autonomy", 409)
+
     dijkstraGraph = prepareForDijkstra(returnedCandidates, graph)
 
     finalPoints = dijkstra(dijkstraGraph, "0", str(
