@@ -47,7 +47,7 @@ def dijkstra(
     # Build the path from start to end
     path: list = []
     current_node = end
-    while current_node is not "":
+    while current_node != "":
         path.append(current_node)
         current_node = parents[current_node]
     path.reverse()
