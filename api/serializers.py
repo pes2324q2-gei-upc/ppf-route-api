@@ -1,9 +1,8 @@
-from pkg_resources import require
 from common.models.route import Route
 from rest_framework.serializers import ModelSerializer
 from rest_framework import serializers
 
-from common.models.user import User
+from common.models.user import User, GoogleCalendarCredentials
 from common.models.charger import LocationCharger, ChargerLocationType, ChargerVelocity
 
 
@@ -145,3 +144,13 @@ class LocationChargerSerializer(ModelSerializer):
 
 class PaymentMethodSerializer(serializers.Serializer):
     payment_method_id = serializers.CharField()
+
+
+class CalendarTokenSerializer(ModelSerializer):
+    class Meta:
+        model = GoogleCalendarCredentials
+        fields = [
+            "access_token",
+            "refresh_token",
+            "token_expiry",
+        ]

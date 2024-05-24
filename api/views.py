@@ -12,6 +12,7 @@ from api.serializers import (
     LocationChargerSerializer,
     PaymentMethodSerializer,
     UserSerializer,
+    CalendarTokenSerializer,
 )
 from common.models.route import Route
 from drf_yasg import openapi
@@ -34,7 +35,7 @@ from rest_framework.status import (
     HTTP_403_FORBIDDEN,
     HTTP_404_NOT_FOUND,
 )
-from common.models.user import Driver
+from common.models.user import Driver, GoogleCalendarCredentials
 from .service.route import (
     computeMapsRoute,
     joinRoute,
@@ -313,3 +314,19 @@ class RoutePassengersList(RetrieveAPIView):
         passengers = route.passengers.all()
         serializer = self.get_serializer(passengers, many=True)
         return Response(serializer.data)
+
+
+class CalendarTokenSaveView(CreateAPIView):
+    """
+    Save the calendar token of a user
+    URI:
+    - POST /calendar_token
+    """
+
+    queryset = GoogleCalendarCredentials.objects.all()
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+    serializer_class = CalendarTokenSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)

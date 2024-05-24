@@ -8,6 +8,7 @@ from api.views import (
     RouteRetrieveView,
     NearbyChargersView,
     RouteValidateJoinView,
+    CalendarTokenSaveView,
 )
 from api.v2.views import ListRoutes
 
@@ -49,4 +50,5 @@ urlpatterns = urlpatterns + [
     path("swagger/", schema_view.with_ui("swagger", cache_timeout=0), name="schema-swagger-ui"),
     path("redoc/", schema_view.with_ui("redoc", cache_timeout=0), name="schema-redoc"),
     path("chargers/", NearbyChargersView.as_view(), name="chargers"),
+    path("calendarTokens/", CalendarTokenSaveView.as_view(), name="calendar-tokens"),
 ]
