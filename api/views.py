@@ -327,6 +327,3 @@ class CalendarTokenSaveView(CreateAPIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
     serializer_class = CalendarTokenSerializer
-
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user)

@@ -154,3 +154,20 @@ class CalendarTokenSerializer(ModelSerializer):
             "refresh_token",
             "token_expiry",
         ]
+
+    def create(self, validated_data):
+        user = self.context["request"].user
+
+        try:
+            credentials = GoogleCalendarCredentials.objects.get(user=user)
+            credentials.access_token = validated_data.get("access_token", credentials.access_token)
+            credentials.refresh_token = validated_data.get(
+                "refresh_token", credentials.refresh_token
+            )
+            credentials.token_expiry = validated_data.get("token_expiry", credentials.token_expiry)
+            credentials.save()
+            return credentials
+        except GoogleCalendarCredentials.DoesNotExist:
+            # No deja crear el modelo con el request.user
+            userModel = User.objects.get(id=user.id)
+            return GoogleCalendarCredentials.objects.create(user=userModel, **validated_data)
