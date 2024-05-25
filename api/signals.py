@@ -102,6 +102,6 @@ def route_created_calendar_event(sender, instance, created, **kwargs):
 
         # Try to add the event to the driver's calendar
         try:
-            add_event_calendar(instance.driver, event_data)
+            add_event_calendar(instance.driver, instance, event_data)
         except Exception:
             pass
