@@ -1,11 +1,14 @@
 from rest_framework import authentication, permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
+
 from api.v2.views import ListRoutes
 from api.views import (
     FinishRoute,
     NearbyChargersView,
     RouteCancelView,
+    LicitacioService,
+    RoutePassengersList,
     RouteJoinView,
     RouteLeaveView,
     RouteListCreateView,
@@ -54,4 +57,6 @@ urlpatterns = urlpatterns + [
     path("redoc/", schema_view.with_ui("redoc",
          cache_timeout=0), name="schema-redoc"),
     path("chargers/", NearbyChargersView.as_view(), name="chargers"),
+    path("chargers/<int:pk>/report",
+         LicitacioService.as_view(), name="charger-detail"),
 ]

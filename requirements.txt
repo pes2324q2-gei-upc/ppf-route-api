@@ -35,6 +35,12 @@ sqlparse==0.4.4
 toposort==1.10
 uritemplate==4.1.1
 urllib3==2.2.1
-boto3
+geopy==2.2.0
+polyline==1.4.0
+scikit-learn==1.4.2
+numpy==1.26.4
+firebase-admin==6.5.0
 django-storages==1.14.0
+polyline==1.4.0
+boto3
 pillow
