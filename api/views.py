@@ -46,6 +46,8 @@ from .service.route import (
     forcedLeaveRoute,
 )
 
+from .service.licitacio import SerializeLicitacio
+
 # Don't delete, needed to create db with models
 from common.models.charger import ChargerLocationType, ChargerVelocity, ChargerLocationType
 from common.models.achievement import Achievement, UserAchievementProgress
@@ -335,18 +337,7 @@ class LicitacioService(CreateAPIView):
     def post(self, request, pk, *args, **kwargs):
         url = "https://licitapp-back-f4zi3ert5q-oa.a.run.app/licitacions/licitacio"
         charger = get_object_or_404(LocationCharger, pk=pk)
-        data = {
-            "latitud": charger.latitud,
-            "longitud": charger.longitud,
-            "nom_organ": charger.promotorGestor,
-            "tipus": "Servei",
-            "procediment": "Obert",
-            "fase_publicacio": "Formalització",
-            "denominacio": "Servei de recàrrega de vehicles elèctrics",
-            "lloc_execucio": charger.adreA,
-            "nom_ambit": "PowerPathFinder",
-            "pressupost": 3.69,
-        }
+        data = SerializeLicitacio(charger)
         headers = {"Content-Type": "application/json"}
         response = requests.post(url, json=data, headers=headers)
 
@@ -354,4 +345,4 @@ class LicitacioService(CreateAPIView):
             return Response({"message": "Licitacion created successfully"}, status=HTTP_201_CREATED)
 
         else:
-            return Response({"message": f"Error creating the licitacion {response.status_code}"})
+            return Response({"message": "Error creating the licitacion"}, status=response.status_code)
