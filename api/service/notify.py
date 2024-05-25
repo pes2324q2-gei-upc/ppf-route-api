@@ -68,7 +68,8 @@ def notify(user: str, title: str, body: str, priority: str):
     try:
         # Send a http request to user-api to send a notification to a certain user
         response = post(
-            NOTIFY_API_URL, json={"user": user, "title": title, "body": body, "priority": priority}
+            NOTIFY_API_URL + "/user",
+            json={"user": user, "title": title, "body": body, "priority": priority},
         )
         response.raise_for_status()  # Raise an exception if the request was not successful
     except HTTPError as e:
