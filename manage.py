@@ -20,3 +20,15 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+# {
+# "originAlias": "Tarragona",
+# "originLat": 41.11905889346404,
+# "originLon": 1.2454971584891437,
+# "destinationAlias": "Platja d'Aro",
+# "destinationLat": 41.817869338317905,
+# "destinationLon": 3.0668585027106294,
+# "departureTime": "2024-10-10T10:00:00Z",
+# "freeSeats": 4,
+# "price": 63.50
+# }

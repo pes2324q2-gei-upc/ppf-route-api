@@ -1,10 +1,10 @@
 import time
-from sklearn.neighbors import NearestNeighbors
-from scipy.sparse import csr_matrix
-from geopy.distance import distance
+from typing import Tuple
+
 import numpy as np
-from typing import Any, Tuple
-from api.service.dijkstra import dijkstra
+from geopy.distance import distance
+from sklearn.neighbors import NearestNeighbors
+
 origin = (41.11364, 1.22503)
 waypoints = {
     "69": (41.38553, 2.19359),
@@ -130,7 +130,7 @@ def kPowerFinder(
     deviationParam: float = 0.1,
     reductionParam: float = 0.05,
     slim: bool = False,
-) -> Tuple[list[Tuple[float, float]], csr_matrix]:
+) -> list[Tuple[float, float]]:
     """
     Reduces the number of candidate points to find the best path to the destination.
 
@@ -156,8 +156,7 @@ def kPowerFinder(
             the number of possible paths and hence the chance of finding the best path.
 
     Returns:
-        List of Tuple[np.ndarray[Any, Any], csr_matrix]: A tuple containing the candidate points and the
-            distance graph between them.
+        List of Tuple[np.ndarray[Any, Any], csr_matrix]: A list of tuples containing the candidate points.
 
     Raises:
         RuntimeError: If the destination is unreachable.
@@ -231,19 +230,13 @@ def kPowerFinder(
             # TODO there might be safer break conditions
             if autonomy2 <= 0:
                 raise ValueError("Destination is unreachable")
-    candidateKnn = NearestNeighbors(
-        radius=autonomy, metric=vectDistance).fit(candidatePoints)
-    graph: csr_matrix = candidateKnn.radius_neighbors_graph(mode="distance")
-
-    # convert from np.ndarray to list of tuples
-    returnedCandidates = []
+    # convert from np.ndarray to list of tuples and do not include the origin and destination
+    tupleList = []
     for coord in candidatePoints.tolist():
-        returnedCandidates.append(tuple(coord))
-
-    # TODO build a structure with the form
-    # given the parameter points and it's type, build a dict with the same structure using the points from returnedCandidates
-
-    return returnedCandidates, graph
+        coord = tuple(coord)
+        if coord != points["origin"] and coord != points["destination"]:
+            tupleList.append(tuple(coord))
+    return tupleList
 
 
 def prepareForDijkstra(returnedCandidates, graph):
@@ -267,6 +260,7 @@ def prepareForDijkstra(returnedCandidates, graph):
 
 
 if __name__ == "__main__":
+    from dijkstra import dijkstra
     """
     When executing this file kPowerFinder executes with different combinations of arguments and
     measures the execution time. It prints the results in a tabular format.
