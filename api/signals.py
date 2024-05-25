@@ -116,10 +116,16 @@ def route_cancelled_driver_calendar_event(sender, instance, created, **kwargs):
         except Exception:
             pass
 
+        for passenger in instance.passengers.all():
+            try:
+                delete_event_calendar(passenger, instance)
+            except Exception:
+                pass
+
 
 # Create a calendar event to the passengers when they join a route
 @receiver(m2m_changed, sender=Route.passengers.through)
-def route_created_passengers_calendar_event(sender, instance, action, pk_set, **kwargs):
+def passenger_join_route_calendar_event(sender, instance, action, pk_set, **kwargs):
     # pk_set contains the ids of the users that have been added or removed to the M2M relation
     if action == "post_add":
         
@@ -153,7 +159,7 @@ def route_created_passengers_calendar_event(sender, instance, action, pk_set, **
 
 # Delete the calendar event to the passengers when they leave a route
 @receiver(m2m_changed, sender=Route.passengers.through)
-def route_cancelled_passengers_calendar_event(sender, instance, action, pk_set, **kwargs):
+def passenger_leave_route_calendar_event(sender, instance, action, pk_set, **kwargs):
     # pk_set contains the ids of the users that have been added or removed to the M2M relation
     if action == "post_remove":
         

@@ -62,9 +62,6 @@ def delete_event_calendar(user, route):
         client_secret=settings.CLIENT_SECRET,
     )
 
-    if credentials.refresh_token:
-        print("Have refresh token")
-
     if credentials.expired and credentials.refresh_token:
         credentials.refresh(Request())
 
