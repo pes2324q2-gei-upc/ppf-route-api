@@ -88,7 +88,7 @@ def notifyPassengers(routeId: str, ntf: Notification):
         None
     """
     # get route passengers user id
-    route: Route | None = Route.objects.get(id=routeId).first()
+    route: Route | None = Route.objects.get(id=routeId)
     if route is not None:
         passengers = route.passengers.all()
         # Notify all passengers
@@ -110,7 +110,7 @@ def notifyDriver(routeId: str, ntf: Notification):
         None
     """
     # get route driver user id
-    route: Route | None = Route.objects.get(id=routeId).first()
+    route: Route | None = Route.objects.get(id=routeId)
     if route is not None:
         driver = route.driver.pk
         # Notify the driver that a passenger has joined the route
