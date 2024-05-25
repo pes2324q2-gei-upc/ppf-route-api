@@ -1,6 +1,5 @@
 """
 This module contains the views for the API endpoints related to routes.
-- TODO: See how exceptions are handled by the framework
 """
 
 from math import atan2, cos, radians, sin, sqrt
@@ -15,17 +14,13 @@ from api.serializers import (
     PreviewRouteSerializer,
     UserSerializer,
 )
-from common.models.achievement import Achievement, UserAchievementProgress
-
-# Don't delete, needed to create db with models
-# Don't delete, needed to create db with models
-from common.models.charger import (
-    ChargerLocationType,
-    ChargerVelocity,
-    LocationCharger,
-)
-from common.models.route import Route
-from common.models.user import Driver
+from common.models.achievement import *
+from common.models.charger import *
+from common.models.fcm import *
+from common.models.payment import *
+from common.models.route import *
+from common.models.user import *
+from common.models.valuation import *
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.authentication import TokenAuthentication
