@@ -376,7 +376,7 @@ class ExchangeCodeView(GenericAPIView):
 
     def save_tokens(self, user, token_data):
         access_token = token_data["access_token"]
-        refresh_token = token_data.get("refresh_token")  # Refresh token may not always be present
+        refresh_token = token_data.get("refresh_token")
         expires_in = token_data.get("expires_in")  # Lifetime of the access token in seconds
         expires_at = datetime.now() + timedelta(seconds=expires_in) if expires_in else None
 
