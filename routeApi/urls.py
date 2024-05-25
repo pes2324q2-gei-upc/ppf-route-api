@@ -1,17 +1,23 @@
+from rest_framework import authentication, permissions
+from drf_yasg.views import get_schema_view
+from drf_yasg import openapi
+
+from api.v2.views import ListRoutes
 from api.views import (
+    FinishRoute,
+    NearbyChargersView,
+    RouteCancelView,
+    LicitacioService,
     RoutePassengersList,
     RouteJoinView,
     RouteLeaveView,
-    RouteCancelView,
     RouteListCreateView,
+    RoutePassengersList,
     RoutePreviewView,
     RouteRetrieveView,
-    NearbyChargersView,
     RouteValidateJoinView,
     ExchangeCodeView,
 )
-from api.v2.views import ListRoutes
-
 from django.urls import path
 
 urlpatterns = [
@@ -24,13 +30,12 @@ urlpatterns = [
     path("routes/<int:pk>/join", RouteJoinView.as_view(), name="route-join"),
     path("routes/<int:pk>/leave", RouteLeaveView.as_view(), name="route-leave"),
     path("v2/routes", ListRoutes.as_view(), name="list-routes-v2"),
-    path("routes/<int:pk>/passengers", RoutePassengersList.as_view(), name="route-list-passengers"),
+    path("routes/<int:pk>/passengers", RoutePassengersList.as_view(),
+         name="route-list-passengers"),
     path("routes/<int:pk>/cancel", RouteCancelView.as_view(), name="route-cancel"),
+    path("routes/<int:pk>/finish", FinishRoute.as_view(), name="route-finish"),
 ]
 
-from drf_yasg import openapi
-from drf_yasg.views import get_schema_view
-from rest_framework import authentication, permissions
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -46,9 +51,14 @@ schema_view = get_schema_view(
 )
 
 urlpatterns = urlpatterns + [
-    path("swagger<format>/", schema_view.without_ui(cache_timeout=0), name="schema-json"),
-    path("swagger/", schema_view.with_ui("swagger", cache_timeout=0), name="schema-swagger-ui"),
-    path("redoc/", schema_view.with_ui("redoc", cache_timeout=0), name="schema-redoc"),
+    path("swagger<format>/", schema_view.without_ui(cache_timeout=0),
+         name="schema-json"),
+    path("swagger/", schema_view.with_ui("swagger",
+         cache_timeout=0), name="schema-swagger-ui"),
+    path("redoc/", schema_view.with_ui("redoc",
+         cache_timeout=0), name="schema-redoc"),
     path("chargers/", NearbyChargersView.as_view(), name="chargers"),
+    path("chargers/<int:pk>/report",
+         LicitacioService.as_view(), name="charger-detail"),
     path("calendar_token/", ExchangeCodeView.as_view(), name="calendar_token"),
 ]

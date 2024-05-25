@@ -1,11 +1,13 @@
 """
 This module contains the views for the API endpoints related to routes.
-- TODO: See how exceptions are handled by the framework
 """
 
 from math import atan2, cos, radians, sin, sqrt
 from typing import Union
 
+
+from django.shortcuts import get_object_or_404
+import requests
 from api.serializers import (
     CreateRouteSerializer,
     DetaliedRouteSerializer,
@@ -16,8 +18,15 @@ from api.serializers import (
     UserSerializer,
     ExchangeCodeSerializer,
 )
-from common.models.route import Route
-from common.models.user import Driver
+
+from common.models.achievement import *
+from common.models.charger import *
+from common.models.fcm import *
+from common.models.payment import *
+from common.models.route import *
+from common.models.user import *
+from common.models.valuation import *
+
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.authentication import TokenAuthentication
@@ -40,16 +49,23 @@ from rest_framework.status import (
     HTTP_404_NOT_FOUND,
     HTTP_409_CONFLICT,
 )
+
+from rest_framework.views import APIView
+
 from common.models.user import User, Driver
 from common.models.calendar import GoogleOAuth2Token, GoogleCalendarEvent
 from .service.route import (
     computeMapsRoute,
     computeOptimizedRoute,
+
     forcedLeaveRoute,
     joinRoute,
     leaveRoute,
     validateJoinRoute,
 )
+from .service.notify import Notification, notifyDriver, notifyPassengers
+
+from .service.licitacio import serializeLicitacio
 
 # Don't delete, needed to create db with models
 from common.models.charger import ChargerLocationType, ChargerVelocity
@@ -96,14 +112,10 @@ class RoutePreviewView(CreateAPIView):
             return Response(status=HTTP_400_BAD_REQUEST)
 
         # Compute the route and return it
-        try:
-            preview = computeOptimizedRoute(serializer, request.user.id)
+        routeData, waypoints = computeOptimizedRoute(
+            serializer, request.user.id)
 
-        except Exception as e:
-            return Response({"error": str(e)}, status=HTTP_409_CONFLICT)
-        # TODO cache the route, maybe use a hash of the coordinates as the key
-
-        return Response(preview, status=HTTP_200_OK)
+        return Response({**routeData, "waypoints": waypoints}, status=HTTP_200_OK)
 
 
 class RouteListCreateView(ListCreateAPIView):
@@ -146,10 +158,15 @@ class RouteListCreateView(ListCreateAPIView):
             return Response(status=HTTP_400_BAD_REQUEST)
 
         # Transform the recieved data into a format that the Google Maps API can understand and send the request
-        mapsResponseData = computeMapsRoute(serializer)
-        serializer.save(**{**mapsResponseData, "driver_id": request.user.id})
+        routeData, waypoints = computeOptimizedRoute(serializer, driver.pk)
 
-        return Response(serializer.data, status=HTTP_201_CREATED)
+        # Create the route in the database by validating first the route data
+        instance: Route = serializer.save(
+            driver=driver,
+            waypoints=waypoints,
+            **routeData,
+        )
+        return Response(DetaliedRouteSerializer(instance).data, status=HTTP_201_CREATED)
 
 
 class RouteValidateJoinView(CreateAPIView):
@@ -188,6 +205,9 @@ class RouteJoinView(CreateAPIView):
         userId = request.user.id
         validateJoinRoute(routeId, userId)
         joinRoute(routeId, userId, paymentMethodId)
+
+        route = Route.objects.get(id=routeId)
+        notifyDriver(routeId, Notification.passengerJoined(route.destinationAlias))
         return Response({"message": "User successfully joined the route"}, status=HTTP_200_OK)
 
 
@@ -205,6 +225,9 @@ class RouteLeaveView(CreateAPIView):
         routeId = self.kwargs["pk"]
         userId = request.user.id
         leaveRoute(routeId, userId)
+
+        route = Route.objects.get(id=routeId)
+        notifyDriver(routeId, Notification.passengerLeft(route.destinationAlias))
         return Response({"message": "User successfully left the route"}, status=HTTP_200_OK)
 
 
@@ -247,6 +270,7 @@ class RouteCancelView(CreateAPIView):
 
         route.cancelled = True
         route.save()
+        notifyPassengers(route.id, Notification.routeCancelled(route.destinationAlias))
         return Response({"message": "Route successfully cancelled"}, status=HTTP_200_OK)
 
 
@@ -273,10 +297,10 @@ class NearbyChargersView(ListAPIView):
         ]
     )
     def get(self, request, *args, **kwargs):
-
-        latitud = request.query_params.get("latitud", None)
-        longitud = request.query_params.get("longitud", None)
-        radio = request.query_params.get("radio_km", None)
+        params = request.GET.dict()
+        latitud = params.get("latitud", None)
+        longitud = params.get("longitud", None)
+        radio = params.get("radio_km", None)
 
         if not all([latitud, longitud, radio]):
             return Response(
@@ -287,13 +311,13 @@ class NearbyChargersView(ListAPIView):
         return super().get(request, *args, **kwargs)
 
     def get_queryset(self):
+        params = self.request.GET.dict()
         # get_queryset is called just if three parameters are provided
-        latitud = float(self.request.query_params.get(
-            "latitud"))  # type: ignore
-        longitud = float(self.request.query_params.get(
-            "longitud"))  # type: ignore
-        radio = float(self.request.query_params.get(
-            "radio_km"))  # type: ignore
+
+        latitud = float(params.get("latitud"))  # type: ignore
+        longitud = float(params.get("longitud"))  # type: ignore
+        radio = float(params.get("radio_km"))  # type: ignore
+
 
         queryset = LocationCharger.objects.all()
         cargadores_cercanos = []
@@ -335,6 +359,62 @@ class RoutePassengersList(RetrieveAPIView):
         passengers = route.passengers.all()
         serializer = self.get_serializer(passengers, many=True)
         return Response(serializer.data)
+
+
+
+class FinishRoute(APIView):
+    """
+    End a route and save the changes to the database.
+
+    Methods:
+    - post(self, request, *args, **kwargs)
+    """
+
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        """
+        End a route and save the changes to the database.
+
+        Parameters:
+        - request (Request): The request object containing the current request data.
+        - *args: Additional positional arguments.
+        - **kwargs: Additional keyword arguments.
+
+        Returns:
+        - Response: The response object containing the serialized route data or an error message.
+        """
+        driver = get_object_or_404(Driver, pk=request.user.id)
+        route = get_object_or_404(Route, pk=self.kwargs["pk"])
+        if route.driver == driver:
+            route.finalized = True
+            route.save()
+            serializer = DetaliedRouteSerializer(route)
+            return Response(serializer.data, status=HTTP_200_OK)
+        else:
+            return Response({"error": "You are not the driver of this route"}, status=HTTP_400_BAD_REQUEST)
+
+class LicitacioService(CreateAPIView):
+    """
+    Create a new bid for a route using the charger Id
+    URI:
+    - POST /licitacion
+    """
+
+    def post(self, request, pk, *args, **kwargs):
+        url = "https://licitapp-back-f4zi3ert5q-oa.a.run.app/licitacions/licitacio"
+        charger = get_object_or_404(LocationCharger, pk=pk)
+        data = serializeLicitacio(charger)
+        headers = {"Content-Type": "application/json"}
+        response = requests.post(url, json=data, headers=headers)
+
+        if response.status_code == 201:
+            return Response({"message": "Licitacion created successfully"}, status=HTTP_201_CREATED)
+
+        else:
+            return Response({"message": "Error creating the licitacion"}, status=response.status_code)
+
 
 
 class ExchangeCodeView(GenericAPIView):
