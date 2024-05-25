@@ -5,6 +5,9 @@ This module contains the views for the API endpoints related to routes.
 from math import atan2, cos, radians, sin, sqrt
 from typing import Union
 
+from django.shortcuts import get_object_or_404
+import requests
+
 from api.serializers import (
     CreateRouteSerializer,
     DetaliedRouteSerializer,
@@ -50,7 +53,17 @@ from .service.route import (
     joinRoute,
     leaveRoute,
     validateJoinRoute,
+    forcedLeaveRoute,
 )
+
+from .service.licitacio import serializeLicitacio
+
+# Don't delete, needed to create db with models
+from common.models.charger import ChargerLocationType, ChargerVelocity, ChargerLocationType
+from common.models.achievement import Achievement, UserAchievementProgress
+
+from math import radians, cos, sin, sqrt, atan2
+from common.models.charger import LocationCharger
 
 
 class RouteRetrieveView(RetrieveAPIView):
@@ -87,7 +100,8 @@ class RoutePreviewView(CreateAPIView):
             return Response(status=HTTP_400_BAD_REQUEST)
 
         # Compute the route and return it
-        routeData, waypoints = computeOptimizedRoute(serializer, request.user.id)
+        routeData, waypoints = computeOptimizedRoute(
+            serializer, request.user.id)
 
         return Response({**routeData, "waypoints": waypoints}, status=HTTP_200_OK)
 
@@ -255,9 +269,12 @@ class NearbyChargersView(ListAPIView):
 
     @swagger_auto_schema(
         manual_parameters=[
-            openapi.Parameter("latitud", openapi.IN_QUERY, type=openapi.TYPE_NUMBER),
-            openapi.Parameter("longitud", openapi.IN_QUERY, type=openapi.TYPE_NUMBER),
-            openapi.Parameter("radio_km", openapi.IN_QUERY, type=openapi.TYPE_NUMBER),
+            openapi.Parameter("latitud", openapi.IN_QUERY,
+                              type=openapi.TYPE_NUMBER),
+            openapi.Parameter("longitud", openapi.IN_QUERY,
+                              type=openapi.TYPE_NUMBER),
+            openapi.Parameter("radio_km", openapi.IN_QUERY,
+                              type=openapi.TYPE_NUMBER),
         ]
     )
     def get(self, request, *args, **kwargs):
@@ -288,7 +305,8 @@ class NearbyChargersView(ListAPIView):
             # TODO can we get this out of the controller?
             # Apply the haversine formula to calculate the distance between two points
             lat1, lon1, lat2, lon2 = map(
-                radians, [latitud, longitud, cargador.latitud, cargador.longitud]
+                radians, [latitud, longitud,
+                          cargador.latitud, cargador.longitud]
             )
             dlon = lon2 - lon1
             dlat = lat2 - lat1
@@ -320,3 +338,24 @@ class RoutePassengersList(RetrieveAPIView):
         passengers = route.passengers.all()
         serializer = self.get_serializer(passengers, many=True)
         return Response(serializer.data)
+
+
+class LicitacioService(CreateAPIView):
+    """
+    Create a new bid for a route using the charger Id
+    URI:
+    - POST /licitacion
+    """
+
+    def post(self, request, pk, *args, **kwargs):
+        url = "https://licitapp-back-f4zi3ert5q-oa.a.run.app/licitacions/licitacio"
+        charger = get_object_or_404(LocationCharger, pk=pk)
+        data = serializeLicitacio(charger)
+        headers = {"Content-Type": "application/json"}
+        response = requests.post(url, json=data, headers=headers)
+
+        if response.status_code == 201:
+            return Response({"message": "Licitacion created successfully"}, status=HTTP_201_CREATED)
+
+        else:
+            return Response({"message": "Error creating the licitacion"}, status=response.status_code)
