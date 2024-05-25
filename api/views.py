@@ -37,7 +37,8 @@ from rest_framework.status import (
     HTTP_404_NOT_FOUND,
     HTTP_409_CONFLICT,
 )
-from common.models.user import User, Driver, GoogleOAuth2Token
+from common.models.user import User, Driver
+from common.models.calendar import GoogleOAuth2Token
 from .service.route import (
     computeMapsRoute,
     joinRoute,
