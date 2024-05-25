@@ -1,6 +1,5 @@
 """
 This module contains the views for the API endpoints related to routes.
-- TODO: See how exceptions are handled by the framework
 """
 
 from math import atan2, cos, radians, sin, sqrt
@@ -15,15 +14,13 @@ from api.serializers import (
     PreviewRouteSerializer,
     UserSerializer,
 )
-
-# Don't delete, needed to create db with models
-from common.models.charger import (
-    ChargerLocationType,
-    ChargerVelocity,
-    LocationCharger,
-)
-from common.models.route import Route
-from common.models.user import Driver
+from common.models.achievement import *
+from common.models.charger import *
+from common.models.fcm import *
+from common.models.payment import *
+from common.models.route import *
+from common.models.user import *
+from common.models.valuation import *
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.authentication import TokenAuthentication
@@ -54,13 +51,6 @@ from .service.route import (
     leaveRoute,
     validateJoinRoute,
 )
-
-# Don't delete, needed to create db with models
-from common.models.charger import ChargerLocationType, ChargerVelocity, ChargerLocationType
-from common.models.achievement import Achievement, UserAchievementProgress
-
-from math import radians, cos, sin, sqrt, atan2
-from common.models.charger import LocationCharger
 
 
 class RouteRetrieveView(RetrieveAPIView):
@@ -97,14 +87,9 @@ class RoutePreviewView(CreateAPIView):
             return Response(status=HTTP_400_BAD_REQUEST)
 
         # Compute the route and return it
-        try:
-            preview = computeOptimizedRoute(serializer, request.user.id)
+        routeData, waypoints = computeOptimizedRoute(serializer, request.user.id)
 
-        except Exception as e:
-            return Response({"error": str(e)}, status=HTTP_409_CONFLICT)
-        # TODO cache the route, maybe use a hash of the coordinates as the key
-
-        return Response(preview, status=HTTP_200_OK)
+        return Response({**routeData, "waypoints": waypoints}, status=HTTP_200_OK)
 
 
 class RouteListCreateView(ListCreateAPIView):
@@ -147,10 +132,15 @@ class RouteListCreateView(ListCreateAPIView):
             return Response(status=HTTP_400_BAD_REQUEST)
 
         # Transform the recieved data into a format that the Google Maps API can understand and send the request
-        mapsResponseData = computeMapsRoute(serializer)
-        serializer.save(**{**mapsResponseData, "driver_id": request.user.id})
+        routeData, waypoints = computeOptimizedRoute(serializer, driver.pk)
 
-        return Response(serializer.data, status=HTTP_201_CREATED)
+        # Create the route in the database by validating first the route data
+        instance: Route = serializer.save(
+            driver=driver,
+            waypoints=waypoints,
+            **routeData,
+        )
+        return Response(DetaliedRouteSerializer(instance).data, status=HTTP_201_CREATED)
 
 
 class RouteValidateJoinView(CreateAPIView):
@@ -265,19 +255,16 @@ class NearbyChargersView(ListAPIView):
 
     @swagger_auto_schema(
         manual_parameters=[
-            openapi.Parameter("latitud", openapi.IN_QUERY,
-                              type=openapi.TYPE_NUMBER),
-            openapi.Parameter("longitud", openapi.IN_QUERY,
-                              type=openapi.TYPE_NUMBER),
-            openapi.Parameter("radio_km", openapi.IN_QUERY,
-                              type=openapi.TYPE_NUMBER),
+            openapi.Parameter("latitud", openapi.IN_QUERY, type=openapi.TYPE_NUMBER),
+            openapi.Parameter("longitud", openapi.IN_QUERY, type=openapi.TYPE_NUMBER),
+            openapi.Parameter("radio_km", openapi.IN_QUERY, type=openapi.TYPE_NUMBER),
         ]
     )
     def get(self, request, *args, **kwargs):
-
-        latitud = request.query_params.get("latitud", None)
-        longitud = request.query_params.get("longitud", None)
-        radio = request.query_params.get("radio_km", None)
+        params = request.GET.dict()
+        latitud = params.get("latitud", None)
+        longitud = params.get("longitud", None)
+        radio = params.get("radio_km", None)
 
         if not all([latitud, longitud, radio]):
             return Response(
@@ -288,13 +275,11 @@ class NearbyChargersView(ListAPIView):
         return super().get(request, *args, **kwargs)
 
     def get_queryset(self):
+        params = self.request.GET.dict()
         # get_queryset is called just if three parameters are provided
-        latitud = float(self.request.query_params.get(
-            "latitud"))  # type: ignore
-        longitud = float(self.request.query_params.get(
-            "longitud"))  # type: ignore
-        radio = float(self.request.query_params.get(
-            "radio_km"))  # type: ignore
+        latitud = float(params.get("latitud"))  # type: ignore
+        longitud = float(params.get("longitud"))  # type: ignore
+        radio = float(params.get("radio_km"))  # type: ignore
 
         queryset = LocationCharger.objects.all()
         cargadores_cercanos = []
@@ -303,8 +288,7 @@ class NearbyChargersView(ListAPIView):
             # TODO can we get this out of the controller?
             # Apply the haversine formula to calculate the distance between two points
             lat1, lon1, lat2, lon2 = map(
-                radians, [latitud, longitud,
-                          cargador.latitud, cargador.longitud]
+                radians, [latitud, longitud, cargador.latitud, cargador.longitud]
             )
             dlon = lon2 - lon1
             dlat = lat2 - lat1
