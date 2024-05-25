@@ -26,7 +26,7 @@ class BaseRouteAPIView(APIView):
     """
 
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
     pagination_class = BasePaginator
     ordering = ["id"]
     # renderer classes set by default in settings
