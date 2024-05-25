@@ -2,6 +2,7 @@ from enum import Enum
 
 from common.models.route import Route
 from requests import HTTPError, post
+import logging
 
 NOTIFY_API_URL = "http://user-api:8000/push/notify"
 
@@ -74,7 +75,8 @@ def notify(user: str, title: str, body: str, priority: str):
         response.raise_for_status()  # Raise an exception if the request was not successful
     except HTTPError as e:
         # Log the error message if the request fails
-        assert False, f"Failed to send notification: {e}"
+        logging.error(str(e))
+        pass
 
 
 def notifyPassengers(routeId: str, ntf: Notification):
