@@ -92,12 +92,7 @@ class RoutePreviewView(CreateAPIView):
             return Response(status=HTTP_400_BAD_REQUEST)
 
         # Compute the route and return it
-        try:
-            routeData, waypoints = computeOptimizedRoute(serializer, request.user.id)
-
-        except Exception as e:
-            return Response({"error": str(e)}, status=HTTP_409_CONFLICT)
-        # TODO cache the route, maybe use a hash of the coordinates as the key
+        routeData, waypoints = computeOptimizedRoute(serializer, request.user.id)
 
         return Response({**routeData, "waypoints": waypoints}, status=HTTP_200_OK)
 

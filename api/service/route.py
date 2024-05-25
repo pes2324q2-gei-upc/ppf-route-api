@@ -24,6 +24,14 @@ X_GOOGLE_FIELDS = (
     "routes.distanceMeters,routes.duration,routes.polyline.encodedPolyline",
 )
 
+from rest_framework.exceptions import APIException
+
+
+class NoRouteFound(APIException):
+    status_code = 404
+    default_detail = "No routes found"
+    default_code = "no_routes_found"
+
 
 def buildMapsRouteRequest(
     serializer: Union[PreviewRouteSerializer, CreateRouteSerializer]
@@ -66,7 +74,7 @@ def deserializeMapsRoutesResponse(mapsRoute: ComputeRoutesResponse):
     assert isinstance(mapsRoute, ComputeRoutesResponse), "Wrong type for response parameter"
 
     if not mapsRoute.routes:
-        raise ValueError("No routes found")
+        raise NoRouteFound()
 
     route: GRoute = mapsRoute.routes[0]
     return {
@@ -170,9 +178,6 @@ def computeOptimizedRoute(
     user = Driver.objects.get(id=driverId)
     autonomy = user.autonomy
 
-    if autonomy <= 0:
-        raise ValidationError("Autonomy must be greater than 0", 409)
-
     finalRoute: list[dict[str, str | float]] = []
     origin_to_destination_distance = distance(decodedPolyline[0], decodedPolyline[-1]).km
 
@@ -250,19 +255,16 @@ def calculateChargerPoints(bounds: dict, chargerTypes: list):
     try:
         chargerTypeObjs = ChargerLocationType.objects.filter(chargerType__in=chargerTypes)
     except ChargerLocationType.DoesNotExist:
-        raise ValidationError("Charger type does not exist", 400)
+        raise APIException()
     # Get the charger points
-    try:
-        chargerPoints = LocationCharger.objects.filter(
-            connectionType__in=chargerTypeObjs,
-            latitud__gte=bounds["southwest"][0],
-            latitud__lte=bounds["northeast"][0],
-            longitud__gte=bounds["southwest"][1],
-            longitud__lte=bounds["northeast"][1],
-        )
-    except LocationCharger.DoesNotExist:
-        raise ValidationError("Charger points do not exist", 400)
-    return list(chargerPoints.values())
+    chargerPoints = LocationCharger.objects.filter(
+        connectionType__in=chargerTypeObjs,
+        latitud__gte=bounds["southwest"][0],
+        latitud__lte=bounds["northeast"][0],
+        longitud__gte=bounds["southwest"][1],
+        longitud__lte=bounds["northeast"][1],
+    ).values()
+    return list(chargerPoints)
 
 
 def vectDistance(point1: list[float], point2: list[float]):
@@ -283,7 +285,7 @@ def computeChargersRoute(routePoints: dict[str, tuple[float, float]], autonomy: 
             routePoints,
         )
     except ValueError:
-        raise ValidationError("Can't reach destination with car autonomy", 409)
+        raise NoRouteFound("Destination is unreachable")
 
     # Label the charger points with it's ID
     labeledChargers: dict[str, tuple[float, float]] = {}
@@ -296,7 +298,7 @@ def computeChargersRoute(routePoints: dict[str, tuple[float, float]], autonomy: 
             if not chargerInstance:
                 raise LocationCharger.DoesNotExist
         except LocationCharger.DoesNotExist:
-            raise ValidationError("Charger point does not exist", 500)  # and it should be exist
+            raise APIException()  # and it should exist
 
         labeledChargers[chargerInstance.pk] = coord
 
