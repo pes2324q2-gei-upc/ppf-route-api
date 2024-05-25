@@ -108,7 +108,7 @@ def buildMapsRouteRequestChargers(path: list[dict[str, Union[str, float]]]):
 
     # Remove the origin and destination from the path
     waypoints = path[1:-1]
-    origin = path[1]
+    origin = path[0]
     destination = path[-1]
 
     # Format the waypoints into a string
@@ -178,8 +178,18 @@ def computeOptimizedRoute(
 
     # If the distance is less than the autonomy, return a direct route
     if origin_to_destination_distance <= autonomy:
-        finalRoute.append(decodedPolyline[0])
-        finalRoute.append(decodedPolyline[-1])
+        finalRoute = [
+            {
+                "charger": "origin",
+                "latitude": decodedPolyline[0][0],
+                "longitude": decodedPolyline[0][1],
+            },
+            {
+                "charger": "destination",
+                "latitude": decodedPolyline[-1][0],
+                "longitude": decodedPolyline[-1][1],
+            },
+        ]
 
     else:
         # Get route bounds

@@ -145,13 +145,12 @@ class RouteListCreateView(ListCreateAPIView):
         routeData, waypoints = computeOptimizedRoute(serializer, driver.pk)
 
         # Create the route in the database by validating first the route data
-        instance = serializer.save(
+        instance: Route = serializer.save(
             driver=driver,
             waypoints=waypoints,
             **routeData,
         )
-
-        return Response(serializer.data, status=HTTP_201_CREATED)
+        return Response(DetaliedRouteSerializer(instance).data, status=HTTP_201_CREATED)
 
 
 class RouteValidateJoinView(CreateAPIView):
