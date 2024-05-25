@@ -4,14 +4,13 @@ from googleapiclient.discovery import build
 from common.models.calendar import GoogleOAuth2Token, GoogleCalendarEvent
 from common.models.user import User
 from django.conf import settings
-from rest_framework.exceptions import APIException
 
 
 def add_event_calendar(user, route, event_data):
     try:
         token = GoogleOAuth2Token.objects.get(user=user)
     except GoogleOAuth2Token.DoesNotExist:
-        raise APIException("No tokens found for user")
+        raise Exception("No tokens found for user")
 
     credentials = Credentials(
         token=token.access_token,
@@ -48,12 +47,12 @@ def delete_event_calendar(user, route):
     try:
         event = GoogleCalendarEvent.objects.get(user=user, route=route)
     except GoogleCalendarEvent.DoesNotExist:
-        raise APIException("No event found for this user and route")
+        raise Exception("No event found for this user and route")
 
     try:
         token = GoogleOAuth2Token.objects.get(user=user)
     except GoogleOAuth2Token.DoesNotExist:
-        raise APIException("No tokens found for user")
+        raise Exception("No tokens found for user")
 
     credentials = Credentials(
         token=token.access_token,
@@ -81,4 +80,4 @@ def delete_event_calendar(user, route):
         event.delete()
         return True
     except Exception as e:
-        raise APIException(f"Failed to delete event: {str(e)}")
+        raise Exception(f"Failed to delete event: {str(e)}")
