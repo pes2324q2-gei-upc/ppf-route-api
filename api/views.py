@@ -14,6 +14,7 @@ from api.serializers import (
     PaymentMethodSerializer,
     PreviewRouteSerializer,
     UserSerializer,
+    ExchangeCodeSerializer,
 )
 from common.models.route import Route
 from common.models.user import Driver
@@ -38,7 +39,6 @@ from rest_framework.status import (
     HTTP_403_FORBIDDEN,
     HTTP_404_NOT_FOUND,
     HTTP_409_CONFLICT,
-    HTTP_409_CONFLICT,
 )
 from common.models.user import User, Driver
 from common.models.calendar import GoogleOAuth2Token, GoogleCalendarEvent
@@ -52,7 +52,7 @@ from .service.route import (
 )
 
 # Don't delete, needed to create db with models
-from common.models.charger import ChargerLocationType, ChargerVelocity, ChargerLocationType
+from common.models.charger import ChargerLocationType, ChargerVelocity
 from common.models.achievement import Achievement, UserAchievementProgress
 
 from math import radians, cos, sin, sqrt, atan2
