@@ -8,7 +8,6 @@ from typing import Union
 
 from django.shortcuts import get_object_or_404
 import requests
-
 from api.serializers import (
     CreateRouteSerializer,
     DetaliedRouteSerializer,
@@ -18,18 +17,6 @@ from api.serializers import (
     PreviewRouteSerializer,
     UserSerializer,
 )
-
-from common.models.achievement import Achievement, UserAchievementProgress
-
-# Don't delete, needed to create db with models
-from common.models.charger import (
-    ChargerLocationType,
-    ChargerVelocity,
-    LocationCharger,
-)
-from common.models.route import Route
-from common.models.user import Driver, User
-from django.shortcuts import get_object_or_404
 
 from common.models.achievement import *
 from common.models.charger import *
@@ -72,7 +59,7 @@ from .service.route import (
     leaveRoute,
     validateJoinRoute,
 )
-
+from .service.notify import Notification, notifyDriver, notifyPassengers
 
 from .service.licitacio import serializeLicitacio
 
@@ -211,6 +198,9 @@ class RouteJoinView(CreateAPIView):
         userId = request.user.id
         validateJoinRoute(routeId, userId)
         joinRoute(routeId, userId, paymentMethodId)
+
+        route = Route.objects.get(id=routeId)
+        notifyDriver(routeId, Notification.passengerJoined(route.destinationAlias))
         return Response({"message": "User successfully joined the route"}, status=HTTP_200_OK)
 
 
@@ -228,6 +218,9 @@ class RouteLeaveView(CreateAPIView):
         routeId = self.kwargs["pk"]
         userId = request.user.id
         leaveRoute(routeId, userId)
+
+        route = Route.objects.get(id=routeId)
+        notifyDriver(routeId, Notification.passengerLeft(route.destinationAlias))
         return Response({"message": "User successfully left the route"}, status=HTTP_200_OK)
 
 
@@ -270,6 +263,7 @@ class RouteCancelView(CreateAPIView):
 
         route.cancelled = True
         route.save()
+        notifyPassengers(route.id, Notification.routeCancelled(route.destinationAlias))
         return Response({"message": "Route successfully cancelled"}, status=HTTP_200_OK)
 
 
