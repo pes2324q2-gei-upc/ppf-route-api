@@ -12,7 +12,7 @@ from api.serializers import (
     LocationChargerSerializer,
     PaymentMethodSerializer,
     UserSerializer,
-    CalendarTokenSerializer,
+    ExchangeCodeSerializer,
 )
 from common.models.route import Route
 from drf_yasg import openapi
@@ -23,6 +23,7 @@ from rest_framework.generics import (
     ListCreateAPIView,
     RetrieveAPIView,
     ListAPIView,
+    GenericAPIView,
 )
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
@@ -34,8 +35,9 @@ from rest_framework.status import (
     HTTP_400_BAD_REQUEST,
     HTTP_403_FORBIDDEN,
     HTTP_404_NOT_FOUND,
+    HTTP_409_CONFLICT,
 )
-from common.models.user import Driver, GoogleCalendarCredentials
+from common.models.user import User, Driver, GoogleOAuth2Token
 from .service.route import (
     computeMapsRoute,
     joinRoute,
@@ -50,6 +52,9 @@ from common.models.achievement import Achievement, UserAchievementProgress
 
 from math import radians, cos, sin, sqrt, atan2
 from common.models.charger import LocationCharger
+from django.conf import settings
+import requests
+from datetime import datetime, timedelta
 
 
 class RouteRetrieveView(RetrieveAPIView):
@@ -316,14 +321,70 @@ class RoutePassengersList(RetrieveAPIView):
         return Response(serializer.data)
 
 
-class CalendarTokenSaveView(CreateAPIView):
+class ExchangeCodeView(GenericAPIView):
     """
-    Save the calendar token of a user
-    URI:
-    - POST /calendar_token
+    Through the code provided by the Google OAuth2 API, the access token and refresh token are obtained
+    POST /exchange_code
     """
 
-    queryset = GoogleCalendarCredentials.objects.all()
+    serializer_class = ExchangeCodeSerializer
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
-    serializer_class = CalendarTokenSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            code = serializer.validated_data.get("code")
+            user = self.request.user
+            userModel = User.objects.get(id=user.pk)
+
+            try:
+                token_data = self.exchange_code_for_tokens(code)
+                self.save_tokens(userModel, token_data)
+                return Response(
+                    {"message": "access_token and refresh_token saved successfully"},
+                    status=HTTP_200_OK,
+                )
+            except ValueError as e:
+                return Response({"error": str(e)}, status=HTTP_409_CONFLICT)
+        else:
+            return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
+
+    def exchange_code_for_tokens(self, code):
+        client_id = settings.CLIENT_ID
+        client_secret = settings.CLIENT_SECRET
+        redirect_uri = settings.REDIRECT_URI
+
+        token_url = "https://oauth2.googleapis.com/token"
+        payload = {
+            "code": code,
+            "client_id": client_id,
+            "client_secret": client_secret,
+            "redirect_uri": redirect_uri,
+            "grant_type": "authorization_code",
+        }
+
+        response = requests.post(token_url, data=payload)
+        token_data = response.json()
+
+        if "access_token" not in token_data:
+            raise ValueError(
+                "Access token not found in google response. Please retry with another code."
+            )
+
+        return token_data
+
+    def save_tokens(self, user, token_data):
+        access_token = token_data["access_token"]
+        refresh_token = token_data.get("refresh_token")  # Refresh token may not always be present
+        expires_in = token_data.get("expires_in")  # Lifetime of the access token in seconds
+        expires_at = datetime.now() + timedelta(seconds=expires_in) if expires_in else None
+
+        GoogleOAuth2Token.objects.update_or_create(
+            user=user,
+            defaults={
+                "access_token": access_token,
+                "refresh_token": refresh_token,
+                "expires_at": expires_at,
+            },
+        )
