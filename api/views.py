@@ -5,6 +5,7 @@ This module contains the views for the API endpoints related to routes.
 from math import atan2, cos, radians, sin, sqrt
 from typing import Union
 
+
 from django.shortcuts import get_object_or_404
 import requests
 from api.serializers import (
@@ -24,6 +25,7 @@ from common.models.payment import *
 from common.models.route import *
 from common.models.user import *
 from common.models.valuation import *
+
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.authentication import TokenAuthentication
@@ -46,14 +48,16 @@ from rest_framework.status import (
     HTTP_409_CONFLICT,
 )
 
+from rest_framework.views import APIView
+
 from .service.route import (
     computeMapsRoute,
     computeOptimizedRoute,
+
     forcedLeaveRoute,
     joinRoute,
     leaveRoute,
     validateJoinRoute,
-    forcedLeaveRoute,
 )
 from .service.notify import Notification, notifyDriver, notifyPassengers
 
@@ -302,9 +306,11 @@ class NearbyChargersView(ListAPIView):
     def get_queryset(self):
         params = self.request.GET.dict()
         # get_queryset is called just if three parameters are provided
+
         latitud = float(params.get("latitud"))  # type: ignore
         longitud = float(params.get("longitud"))  # type: ignore
         radio = float(params.get("radio_km"))  # type: ignore
+
 
         queryset = LocationCharger.objects.all()
         cargadores_cercanos = []
@@ -348,6 +354,40 @@ class RoutePassengersList(RetrieveAPIView):
         return Response(serializer.data)
 
 
+
+class FinishRoute(APIView):
+    """
+    End a route and save the changes to the database.
+
+    Methods:
+    - post(self, request, *args, **kwargs)
+    """
+
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        """
+        End a route and save the changes to the database.
+
+        Parameters:
+        - request (Request): The request object containing the current request data.
+        - *args: Additional positional arguments.
+        - **kwargs: Additional keyword arguments.
+
+        Returns:
+        - Response: The response object containing the serialized route data or an error message.
+        """
+        driver = get_object_or_404(Driver, pk=request.user.id)
+        route = get_object_or_404(Route, pk=self.kwargs["pk"])
+        if route.driver == driver:
+            route.finalized = True
+            route.save()
+            serializer = DetaliedRouteSerializer(route)
+            return Response(serializer.data, status=HTTP_200_OK)
+        else:
+            return Response({"error": "You are not the driver of this route"}, status=HTTP_400_BAD_REQUEST)
+
 class LicitacioService(CreateAPIView):
     """
     Create a new bid for a route using the charger Id
@@ -367,3 +407,4 @@ class LicitacioService(CreateAPIView):
 
         else:
             return Response({"message": "Error creating the licitacion"}, status=response.status_code)
+

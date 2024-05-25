@@ -1,20 +1,22 @@
 from rest_framework import authentication, permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
+
+from api.v2.views import ListRoutes
 from api.views import (
+    FinishRoute,
+    NearbyChargersView,
+    RouteCancelView,
     LicitacioService,
     RoutePassengersList,
     RouteJoinView,
     RouteLeaveView,
-    RouteCancelView,
     RouteListCreateView,
+    RoutePassengersList,
     RoutePreviewView,
     RouteRetrieveView,
-    NearbyChargersView,
     RouteValidateJoinView,
 )
-from api.v2.views import ListRoutes
-
 from django.urls import path
 
 urlpatterns = [
@@ -30,6 +32,7 @@ urlpatterns = [
     path("routes/<int:pk>/passengers", RoutePassengersList.as_view(),
          name="route-list-passengers"),
     path("routes/<int:pk>/cancel", RouteCancelView.as_view(), name="route-cancel"),
+    path("routes/<int:pk>/finish", FinishRoute.as_view(), name="route-finish"),
 ]
 
 
