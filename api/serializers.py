@@ -88,6 +88,7 @@ class ListRouteSerializer(ModelSerializer):
             "passengers",
             "originDistance",
             "destinationDistance",
+            "finalized",
         ]
 
 

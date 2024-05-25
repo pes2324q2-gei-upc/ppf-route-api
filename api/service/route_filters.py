@@ -49,7 +49,7 @@ class BaseRouteFilter(FilterSet):
     def userFilter(self, queryset, name, value):
         return queryset.filter(Q(driver__id=value) | Q(passengers__id__in=value))
 
-    radius = 5  # Radius in kilometers
+    radius = 50  # Radius in kilometers
 
     location = CharFilter(
         method="location_filter",
