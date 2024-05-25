@@ -8,6 +8,8 @@ from django.dispatch import receiver
 from common.models.achievement import UserAchievementProgress, Achievement
 from common.models.route import Route
 from common.models.user import User
+from .service.calendar import add_event_calendar
+import datetime
 
 
 # Create 1, 10 and 50 routes
@@ -71,3 +73,35 @@ def check_and_increment_progress(user_achievement, achievement, instance):
             user_achievement.achieved = True
             user_achievement.date_achieved = instance.createdAt
         user_achievement.save()
+
+
+# Create a calendar event to the driver when a route is created
+@receiver(post_save, sender=Route)
+def route_created_calendar_event(sender, instance, created, **kwargs):
+    if created:
+
+        if isinstance(instance.duration, int):
+            instance.duration = datetime.timedelta(seconds=instance.duration)
+
+        event_data = {
+            "summary": f"Route {instance.id}",
+            "location": f"{instance.originAlias} - {instance.destinationAlias}",
+            "description": f"Route from {instance.originAlias} to {instance.destinationAlias}",
+            "start": {
+                "dateTime": instance.departureTime.isoformat(),
+                "timeZone": "Europe/Madrid",
+            },
+            "end": {
+                "dateTime": (instance.departureTime + instance.duration).isoformat(),
+                "timeZone": "Europe/Madrid",
+            },
+            "reminders": {
+                "useDefault": True,
+            },
+        }
+
+        # Try to add the event to the driver's calendar
+        try:
+            add_event_calendar(instance.driver, event_data)
+        except Exception:
+            pass
