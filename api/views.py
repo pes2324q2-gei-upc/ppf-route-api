@@ -56,7 +56,7 @@ from .service.route import (
     forcedLeaveRoute,
 )
 
-from .service.licitacio import SerializeLicitacio
+from .service.licitacio import serializeLicitacio
 
 # Don't delete, needed to create db with models
 from common.models.charger import ChargerLocationType, ChargerVelocity, ChargerLocationType
@@ -350,7 +350,7 @@ class LicitacioService(CreateAPIView):
     def post(self, request, pk, *args, **kwargs):
         url = "https://licitapp-back-f4zi3ert5q-oa.a.run.app/licitacions/licitacio"
         charger = get_object_or_404(LocationCharger, pk=pk)
-        data = SerializeLicitacio(charger)
+        data = serializeLicitacio(charger)
         headers = {"Content-Type": "application/json"}
         response = requests.post(url, json=data, headers=headers)
 

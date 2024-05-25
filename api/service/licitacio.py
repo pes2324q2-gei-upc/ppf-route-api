@@ -1,4 +1,4 @@
-def SerializeLicitacio(charger):
+def serializeLicitacio(charger):
     data = {
         "latitud": charger.latitud,
         "longitud": charger.longitud,
