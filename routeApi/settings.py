@@ -21,7 +21,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-3tlr8i)au#4p)jvh3=kr^)&t^91np04$j)7sdt^jgw8toin01-"
+SECRET_KEY = os.environ.get("ROUTES_DJANGO_SECRET_KEY", "veryinsecurekey")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DJANGO_DEBUG", "True") == "True"
@@ -43,7 +43,8 @@ INSTALLED_APPS = [
     "rest_framework.authtoken",
     "drf_yasg",
     "common",
-    "api",
+    "apps.chargers",
+    "apps.routes",
 ]
 
 REST_FRAMEWORK = {
@@ -154,6 +155,5 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
 AUTHENTICATION_BACKENDS = [
-    "usrLogin.backends.EmailBackend",
     "django.contrib.auth.backends.ModelBackend",
 ]
