@@ -1,6 +1,7 @@
-from api.serializers import ListRouteSerializer
-from api.service.route_controller import RouteController
-from api.service.route_filters import BasePaginator, BaseRouteFilter
+from django.urls import path
+from apps.routes.serializers.route import ListRouteSerializer
+from apps.routes.service.route_controller import RouteController
+from apps.routes.service.route_filters import BasePaginator, BaseRouteFilter
 
 from drf_yasg.utils import swagger_auto_schema
 
@@ -65,3 +66,8 @@ class ListRoutes(BaseRouteAPIView, ListAPIView):
     def get(self, request, *args, **kwargs):
         # Filtering and pagination happen at 'view level' (whatever that means)
         return super().get(request, *args, **kwargs)
+
+
+urls = [
+    path(f"{API_VERSION}/routes", ListRoutes.as_view(), name="list-routes-v2"),
+]

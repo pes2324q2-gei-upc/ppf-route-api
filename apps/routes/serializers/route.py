@@ -1,7 +1,7 @@
 from pkg_resources import require
 from common.models.route import Route
-from rest_framework.serializers import ModelSerializer
-from rest_framework import serializers
+from rest_framework.serializers import Serializer, ModelSerializer
+from rest_framework.serializers import CharField, FloatField
 
 from common.models.user import User
 from common.models.charger import LocationCharger, ChargerLocationType, ChargerVelocity
@@ -23,13 +23,12 @@ class CreateRouteSerializer(ModelSerializer):
         ]
 
 
-class UserSerializer(ModelSerializer):
-    class Meta:
-        model = User
-        fields = ["id", "username", "email"]
-
-
 class DetaliedRouteSerializer(ModelSerializer):
+    class UserSerializer(ModelSerializer):
+        class Meta:
+            model = User
+            fields = ["id", "username", "email"]
+
     passengers = UserSerializer(many=True, read_only=True)
     driver = UserSerializer(read_only=True)
 
@@ -71,8 +70,8 @@ class ListRouteSerializer(ModelSerializer):
 
     driver = UserListSerializer(many=False, read_only=True)
     passengers = UserListSerializer(many=True, read_only=True)
-    originDistance = serializers.FloatField(read_only=True, required=False)
-    destinationDistance = serializers.FloatField(read_only=True, required=False)
+    originDistance = FloatField(read_only=True, required=False)
+    destinationDistance = FloatField(read_only=True, required=False)
 
     class Meta:
         model = Route
@@ -142,7 +141,3 @@ class LocationChargerSerializer(ModelSerializer):
             "longitud",
             "adreA",
         ]
-
-
-class PaymentMethodSerializer(serializers.Serializer):
-    payment_method_id = serializers.CharField()
