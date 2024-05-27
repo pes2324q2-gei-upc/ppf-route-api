@@ -60,5 +60,5 @@ urlpatterns = urlpatterns + [
     path("chargers/", NearbyChargersView.as_view(), name="chargers"),
     path("chargers/<int:pk>/report",
          LicitacioService.as_view(), name="charger-detail"),
-    path("calendar_token/", ExchangeCodeView.as_view(), name="calendar_token"),
+    path("calendar_token", ExchangeCodeView.as_view(), name="calendar_token"),
 ]
