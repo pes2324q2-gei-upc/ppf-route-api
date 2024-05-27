@@ -420,7 +420,7 @@ class LicitacioService(CreateAPIView):
 class ExchangeCodeView(GenericAPIView):
     """
     Through the code provided by the Google OAuth2 API, the access token and refresh token are obtained
-    POST /calendar_token/
+    POST /calendar_token
     """
 
     serializer_class = ExchangeCodeSerializer
