@@ -2,23 +2,15 @@
 This module contains the views for the API endpoints related to routes.
 """
 
-from math import atan2, cos, radians, sin, sqrt
-from typing import Union
+from typing import Never, Union
 
-
-from django.shortcuts import get_object_or_404
-from django.urls import path
-import requests
-from api.serializers import (
+from apps.routes.serializers.payments import PaymentMethodSerializer
+from apps.routes.serializers.route import (
     CreateRouteSerializer,
     DetaliedRouteSerializer,
     ListRouteSerializer,
-    LocationChargerSerializer,
-    PaymentMethodSerializer,
     PreviewRouteSerializer,
-    UserSerializer,
 )
-
 from common.models.achievement import *
 from common.models.charger import *
 from common.models.fcm import *
@@ -26,14 +18,14 @@ from common.models.payment import *
 from common.models.route import *
 from common.models.user import *
 from common.models.valuation import *
-
+from django.shortcuts import get_object_or_404
+from django.urls import path
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import (
     CreateAPIView,
-    ListAPIView,
     ListCreateAPIView,
     RetrieveAPIView,
 )
@@ -46,19 +38,9 @@ from rest_framework.status import (
     HTTP_400_BAD_REQUEST,
     HTTP_403_FORBIDDEN,
     HTTP_404_NOT_FOUND,
-    HTTP_409_CONFLICT,
 )
-
 from rest_framework.views import APIView
-
-from .service.route import (
-    computeMapsRoute,
-    computeOptimizedRoute,
-    forcedLeaveRoute,
-    joinRoute,
-    leaveRoute,
-    validateJoinRoute,
-)
+from apps.routes import routesService
 
 
 class RouteRetrieveView(RetrieveAPIView):
@@ -73,6 +55,9 @@ class RouteRetrieveView(RetrieveAPIView):
 
     queryset = Route.objects.all()
     serializer_class = DetaliedRouteSerializer
+
+
+from apps.routes import LatLon, computeRouteService, userService
 
 
 class RoutePreviewView(CreateAPIView):
@@ -90,14 +75,16 @@ class RoutePreviewView(CreateAPIView):
         serializer = self.get_serializer(
             data={"driver": request.user.id, **request.data}  # type: ignore
         )
+        serializer.is_valid(raise_exception=True)
 
-        if not serializer.is_valid(raise_exception=True):
-            return Response(status=HTTP_400_BAD_REQUEST)
+        data = serializer.validated_data
+        origin = LatLon(data.get("originLat"), data.get("originLon"))
+        destination = LatLon(data.get("destinationLat"), data.get("destinationLon"))
+        autonomy = userService.getById(request.user.id).autonomy  # TODO por aqui
 
-        # Compute the route and return it
-        routeData, waypoints = computeOptimizedRoute(serializer, request.user.id)
+        result = computeRouteService.computeChargingRoute(origin, destination, 0)
 
-        return Response({**routeData, "waypoints": waypoints}, status=HTTP_200_OK)
+        return Response(result, status=HTTP_200_OK)
 
 
 class RouteListCreateView(ListCreateAPIView):
@@ -131,19 +118,24 @@ class RouteListCreateView(ListCreateAPIView):
     )
     def post(self, request: Request, *args, **kargs):
         # TODO search for a cached route to not duplicate the route request to maps api
-        driver = Driver.objects.get(id=request.user.id)
+
+        driver = userService.getDriver(
+            request.user.id
+        )  # TODO rasie exception if user is not a driver
 
         serializer: CreateRouteSerializer = self.get_serializer(
-            data={**request.data, "driver": request.user.id}  # type: ignore
+            data={"driver": request.user.id, **request.data}  # type: ignore
         )
-        if not serializer.is_valid():
-            return Response(status=HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
 
-        # Transform the recieved data into a format that the Google Maps API can understand and send the request
-        routeData, waypoints = computeOptimizedRoute(serializer, driver.pk)
+        data = serializer.validated_data
+        origin = LatLon(data.get("originLat"), data.get("originLon"))
+        destination = LatLon(data.get("destinationLat"), data.get("destinationLon"))
+        autonomy = userService.autonomy(request.user.id)
 
-        # Create the route in the database by validating first the route data
-        instance: Route = serializer.save(
+        result = computeRouteService.computeChargingRoute(origin, destination, 0)
+
+        instance = routesService.save(
             driver=driver,
             waypoints=waypoints,
             **routeData,
@@ -151,23 +143,27 @@ class RouteListCreateView(ListCreateAPIView):
         return Response(DetaliedRouteSerializer(instance).data, status=HTTP_201_CREATED)
 
 
-class RouteValidateJoinView(CreateAPIView):
+class RouteValidateJoinView(APIView):
+    # TODO breaking change, from GET to POST
     """
     Validate if a user can join a route
     URI:
-    - POST /routes/{id}/validate_join
+    - GET /routes/{id}/validate_join
     """
 
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, *args, **kwargs):
+    @swagger_auto_schema(
+        responses={
+            200: openapi.Response("User validated to join the route", {}),
+        }
+    )
+    def get(self, request, *args, **kwargs):
         routeId = self.kwargs["pk"]
         userId = request.user.id
         validateJoinRoute(routeId, userId)
-        return Response(
-            {"message": "User successfully validated to join the route"}, status=HTTP_200_OK
-        )
+        return Response({"message": "User validated to join the route"}, status=HTTP_200_OK)
 
 
 class RouteJoinView(CreateAPIView):

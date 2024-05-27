@@ -1,19 +1,34 @@
-from common.models.route import Route
-from rest_framework.serializers import Serializer, ModelSerializer, CharField
+from os import read
+from common.models.charger import (
+    ChargerLocationType,
+    ChargerVelocity,
+    LocationCharger,
+)
+from rest_framework.serializers import ModelSerializer
 
-from common.models.user import User
-from common.models.charger import LocationCharger, ChargerLocationType, ChargerVelocity
+
+class ConnectionTypeSerializer(ModelSerializer):
+    class Meta:
+        model = ChargerLocationType
+        fields = ["chargerType"]
 
 
-class PaymentMethodSerializer(Serializer):
-    class ChargerVelocitySerializer(ModelSerializer):
-        class Meta:
-            model = ChargerVelocity
-            fields = ["velocity"]
+class ChargerVelocitySerializer(ModelSerializer):
+    class Meta:
+        model = ChargerVelocity
+        fields = ["velocity"]
 
-    class ConnectionTypeSerializer(ModelSerializer):
-        class Meta:
-            model = ChargerLocationType
-            fields = ["chargerType"]
 
-    payment_method_id = CharField()
+class LocationChargerSerializer(ModelSerializer):
+    connectionType = ConnectionTypeSerializer(
+        many=True,
+        read_only=True,
+    )
+    velocities = ChargerVelocitySerializer(
+        many=True,
+        read_only=True,
+    )
+
+    class Meta:
+        model = LocationCharger
+        fields = "__all__"
