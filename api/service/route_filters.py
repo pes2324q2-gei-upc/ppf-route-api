@@ -47,7 +47,7 @@ class BaseRouteFilter(FilterSet):
         return queryset.filter(departureTime__range=(start_of_day, end_of_day))
 
     def userFilter(self, queryset, name, value):
-        return queryset.filter(Q(driver__id=value) | Q(passengers__id__in=value))
+        return queryset.filter(Q(driver__id=value) | Q(passengers__id=value))
 
     radius = 50  # Radius in kilometers
 

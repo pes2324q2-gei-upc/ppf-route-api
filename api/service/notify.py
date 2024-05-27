@@ -2,6 +2,7 @@ from enum import Enum
 
 from common.models.route import Route
 from requests import HTTPError, post
+import logging
 
 NOTIFY_API_URL = "http://user-api:8000/push/notify"
 
@@ -68,13 +69,14 @@ def notify(user: str, title: str, body: str, priority: str):
     try:
         # Send a http request to user-api to send a notification to a certain user
         response = post(
-            NOTIFY_API_URL + "/user",
+            NOTIFY_API_URL + f"/{user}",
             json={"user": user, "title": title, "body": body, "priority": priority},
         )
         response.raise_for_status()  # Raise an exception if the request was not successful
     except HTTPError as e:
         # Log the error message if the request fails
-        assert False, f"Failed to send notification: {e}"
+        logging.error(e.strerror)
+        pass
 
 
 def notifyPassengers(routeId: str, ntf: Notification):
@@ -96,7 +98,7 @@ def notifyPassengers(routeId: str, ntf: Notification):
         for passenger in passengers:
             notify(passenger.pk, ntf.title, ntf.body, ntf.priority.value)
     else:
-        assert False, f"Route with id {routeId} not found"
+        logging.error(f"Route with id {routeId} not found")
 
 
 def notifyDriver(routeId: str, ntf: Notification):
@@ -117,4 +119,4 @@ def notifyDriver(routeId: str, ntf: Notification):
         # Notify the driver that a passenger has joined the route
         notify(driver, ntf.title, ntf.body, ntf.priority.value)
     else:
-        assert False, f"Route with id {routeId} not found"
+        logging.error(f"Route with id {routeId} not found")
