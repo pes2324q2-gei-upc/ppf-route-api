@@ -171,14 +171,12 @@ def kPowerFinder(
     origin = points["origin"]
     destination = points["destination"]
     if origin is None or destination is None:
-        raise ValueError(
-            "'points' does not contain 'origin' or 'destination' keys")
+        raise ValueError("'points' does not contain 'origin' or 'destination' keys")
     candidatePoints: np.ndarray = np.ndarray((1, 2), buffer=np.array([origin]))
 
     while destination not in candidatePoints:
         # Search neighbors that are reachable from a reduced autonomy
-        knn = NearestNeighbors(
-            radius=autonomy, metric=vectDistance).fit(pointMatrix)
+        knn = NearestNeighbors(radius=autonomy, metric=vectDistance).fit(pointMatrix)
         reachable = knn.radius_neighbors_graph(
             [np.array(list(origin))], radius=autonomy, mode="distance", sort_results=True
         )
@@ -191,8 +189,7 @@ def kPowerFinder(
             # get the points from ¬R ∩ R' [¬(reachable) ∩ (reachablePrime)]
             # basically the points further than 'autonomy2' but lower than 'autonomy'
             result = np.setdiff1d(
-                reachable.indices, np.intersect1d(
-                    reachable.indices, reachablePrime.indices), True
+                reachable.indices, np.intersect1d(reachable.indices, reachablePrime.indices), True
             )
             if len(result) > 0:
                 # when we one or more points that satisfy the set operation get the nearest point
@@ -205,12 +202,10 @@ def kPowerFinder(
 
                 if slim:
                     # if slim is set we add only the nearest point to the destination as a candidate
-                    candidatePoints = np.append(
-                        candidatePoints, [origin], axis=0)
+                    candidatePoints = np.append(candidatePoints, [origin], axis=0)
                 else:
                     # if slim is not set we add all the points that satisfy the set operation
-                    candidatePoints = np.append(
-                        candidatePoints, pointMatrix[result], axis=0)
+                    candidatePoints = np.append(candidatePoints, pointMatrix[result], axis=0)
 
                 # we get rid of the initially reachable points as we don't want to consider them
                 # again. This allows us to progress towards the destination
@@ -220,8 +215,7 @@ def kPowerFinder(
                 # if not the destination is unreachable
                 if len(pointMatrix) == 1:
                     if pointMatrix[0].tolist() == list(destination):
-                        candidatePoints = np.append(
-                            candidatePoints, pointMatrix, axis=0)
+                        candidatePoints = np.append(candidatePoints, pointMatrix, axis=0)
                     else:
                         raise ValueError("Destination is unreachable")
                 break
@@ -237,72 +231,3 @@ def kPowerFinder(
         if coord != points["origin"] and coord != points["destination"]:
             tupleList.append(tuple(coord))
     return tupleList
-
-
-def prepareForDijkstra(returnedCandidates, graph):
-    """
-    Prepares the data to be used in the dijkstra function.
-
-    Args:
-        returnedCandidates (list): A list of candidate points.
-        graph (csr_matrix): The distance graph between the candidate points.
-
-    Returns:
-        dict: A dictionary with the candidate points and the graph in the format expected by the dijkstra function.
-    """
-    dijkstraGraph = {}
-    for i, point in enumerate(returnedCandidates):
-        dijkstraGraph[str(i)] = {}
-        for j, distance in enumerate(graph[i].toarray()[0]):
-            if distance > 0:
-                dijkstraGraph[str(i)][str(j)] = distance
-    return dijkstraGraph
-
-
-if __name__ == "__main__":
-    from dijkstra import dijkstra
-    """
-    When executing this file kPowerFinder executes with different combinations of arguments and
-    measures the execution time. It prints the results in a tabular format.
-    """
-    # Define different argument combinations
-    autonomy_values = [80, 90, 100, 120]
-    deviation_values = [0.05, 0.10, 0.15, 0.20]
-    reduction_values = [0.05, 0.10, 0.15, 0.20]
-    slim_values = [True, False]
-
-    # Execute kPowerFinder function 5 times for each argument combination
-    print("Autonomy\tDeviation\tReduction\tslim\tTIME (s)")
-    print("-" * 64)
-    for slim in slim_values:
-        for reduction in reduction_values:
-            for deviation in deviation_values:
-                for autonomy in autonomy_values:
-                    times = []
-                    broke = False
-                    for _ in range(5):
-                        start_time = time.time()
-                        try:
-                            returnedCandidates, graph = kPowerFinder(autonomy, points,
-                                                                     deviation, reduction, slim)
-                            dijkstraGraph = prepareForDijkstra(
-                                returnedCandidates, graph)
-                            finalPath = dijkstra(
-                                dijkstraGraph, "0", str(len(returnedCandidates) - 1), autonomy)
-                        except ValueError as e:
-                            print(f"Falied for {autonomy}, {
-                                  deviation}, {reduction}, {slim}")
-                            broke = True
-                            break
-                        end_time = time.time()
-                        execution_time = end_time - start_time
-                        times.append(execution_time)
-                    if broke:
-                        continue
-                    # Remove the max and min values
-                    times.remove(max(times))
-                    times.remove(min(times))
-                    # Calculate the average execution time
-                    average_time = round(sum(times) / len(times), 4)
-                    print(f"{autonomy}\t\t{deviation}\t\t{
-                          reduction}\t\t{slim}\t{average_time}")

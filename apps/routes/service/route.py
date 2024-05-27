@@ -4,7 +4,7 @@ from apps.routes.interface.route import LatLon, ComputeRouteService, RouteServic
 
 class GMapsRouteService(ComputeRouteService):
     """
-    A route service implementation that uses Google Maps API to compute routes.
+    A route compute service implementation that uses Google Maps API to compute routes.
     """
 
     def __init__(self, client):
@@ -18,6 +18,9 @@ class GMapsRouteService(ComputeRouteService):
 
 
 class DjangoRouteService(RouteService):
+    """
+    A route service implementation using Django ORM instances as ActiveRecords.
+    """
 
     def createRoute(self, route: dict):
         pass
