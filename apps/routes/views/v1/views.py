@@ -80,9 +80,9 @@ class RoutePreviewView(CreateAPIView):
         data = serializer.validated_data
         origin = LatLon(data.get("originLat"), data.get("originLon"))
         destination = LatLon(data.get("destinationLat"), data.get("destinationLon"))
-        autonomy = userService.getById(request.user.id).autonomy  # TODO por aqui
+        autonomy = userService.getDriverById(request.user.id).autonomy
 
-        result = computeRouteService.computeChargingRoute(origin, destination, 0)
+        result = computeRouteService.computeChargingRoute(origin, destination, autonomy)
 
         return Response(result, status=HTTP_200_OK)
 
@@ -119,9 +119,7 @@ class RouteListCreateView(ListCreateAPIView):
     def post(self, request: Request, *args, **kargs):
         # TODO search for a cached route to not duplicate the route request to maps api
 
-        driver = userService.getDriver(
-            request.user.id
-        )  # TODO rasie exception if user is not a driver
+        driver = userService.getDriverById(request.user.id)
 
         serializer: CreateRouteSerializer = self.get_serializer(
             data={"driver": request.user.id, **request.data}  # type: ignore
@@ -131,15 +129,11 @@ class RouteListCreateView(ListCreateAPIView):
         data = serializer.validated_data
         origin = LatLon(data.get("originLat"), data.get("originLon"))
         destination = LatLon(data.get("destinationLat"), data.get("destinationLon"))
-        autonomy = userService.autonomy(request.user.id)
+        autonomy = userService.getDriverById(request.user.id).autonomy
 
-        result = computeRouteService.computeChargingRoute(origin, destination, 0)
+        result = computeRouteService.computeChargingRoute(origin, destination, autonomy)
 
-        instance = routesService.save(
-            driver=driver,
-            waypoints=waypoints,
-            **routeData,
-        )
+        instance = routesService.createRoute(driver=driver, **result)
         return Response(DetaliedRouteSerializer(instance).data, status=HTTP_201_CREATED)
 
 
