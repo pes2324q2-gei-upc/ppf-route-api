@@ -75,7 +75,7 @@ def notify(user: str, title: str, body: str, priority: str):
         response.raise_for_status()  # Raise an exception if the request was not successful
     except HTTPError as e:
         # Log the error message if the request fails
-        logging.error(str(e))
+        logging.error(e.strerror)
         pass
 
 
@@ -98,7 +98,7 @@ def notifyPassengers(routeId: str, ntf: Notification):
         for passenger in passengers:
             notify(passenger.pk, ntf.title, ntf.body, ntf.priority.value)
     else:
-        assert False, f"Route with id {routeId} not found"
+        logging.error(f"Route with id {routeId} not found")
 
 
 def notifyDriver(routeId: str, ntf: Notification):
@@ -119,4 +119,4 @@ def notifyDriver(routeId: str, ntf: Notification):
         # Notify the driver that a passenger has joined the route
         notify(driver, ntf.title, ntf.body, ntf.priority.value)
     else:
-        assert False, f"Route with id {routeId} not found"
+        logging.error(f"Route with id {routeId} not found")
