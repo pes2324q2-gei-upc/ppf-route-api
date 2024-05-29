@@ -8,6 +8,7 @@ from typing import Union
 
 import requests
 from api.serializers import (
+    RouteSerializer,
     CreateRouteSerializer,
     DetaliedRouteSerializer,
     ExchangeCodeSerializer,
@@ -161,7 +162,9 @@ class RouteListCreateView(ListCreateAPIView):
             waypoints=waypoints,
             **routeData,
         )
-        return Response(DetaliedRouteSerializer(instance).data, status=HTTP_201_CREATED)
+        # HACK por alguna putisima razon el tipo de duration es datetime.timedelta?? una puta Djangada mas y me mato
+        instance.duration = int(routeData["duration"])
+        return Response(RouteSerializer(instance).data, status=HTTP_201_CREATED)
 
 
 class RouteValidateJoinView(CreateAPIView):

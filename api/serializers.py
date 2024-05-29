@@ -6,6 +6,12 @@ from common.models.user import User
 from common.models.charger import LocationCharger, ChargerLocationType, ChargerVelocity
 
 
+class RouteSerializer(ModelSerializer):
+    class Meta:
+        model = Route
+        fields = "__all__"
+
+
 class CreateRouteSerializer(ModelSerializer):
     class Meta:
         model = Route
