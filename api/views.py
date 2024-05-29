@@ -2,6 +2,7 @@
 This module contains the views for the API endpoints related to routes.
 """
 
+from datetime import datetime, timedelta
 from math import atan2, cos, radians, sin, sqrt
 from typing import Union
 
@@ -9,21 +10,24 @@ import requests
 from api.serializers import (
     CreateRouteSerializer,
     DetaliedRouteSerializer,
+    ExchangeCodeSerializer,
     ListRouteSerializer,
     LocationChargerSerializer,
     PaymentMethodSerializer,
     PreviewRouteSerializer,
     UserSerializer,
-    ExchangeCodeSerializer,
 )
+from api.service.licitacio import serializeLicitacio
+from api.service.notify import Notification, notifyDriver, notifyPassengers
 from common.models.achievement import *
+from common.models.calendar import *
 from common.models.charger import *
-from common.models.charger import LocationCharger
 from common.models.fcm import *
 from common.models.payment import *
 from common.models.route import *
 from common.models.user import *
 from common.models.valuation import *
+from django.conf import settings
 from django.shortcuts import get_object_or_404
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
@@ -31,10 +35,10 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import (
     CreateAPIView,
+    GenericAPIView,
     ListAPIView,
     ListCreateAPIView,
     RetrieveAPIView,
-    GenericAPIView,
 )
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
@@ -49,8 +53,6 @@ from rest_framework.status import (
 )
 from rest_framework.views import APIView
 
-from common.models.user import User, Driver
-from common.models.calendar import GoogleOAuth2Token, GoogleCalendarEvent
 from .service.route import (
     computeMapsRoute,
     computeOptimizedRoute,
@@ -59,19 +61,6 @@ from .service.route import (
     leaveRoute,
     validateJoinRoute,
 )
-from .service.notify import Notification, notifyDriver, notifyPassengers
-
-from .service.licitacio import serializeLicitacio
-
-# Don't delete, needed to create db with models
-from common.models.charger import ChargerLocationType, ChargerVelocity
-from common.models.achievement import Achievement, UserAchievementProgress
-
-from math import radians, cos, sin, sqrt, atan2
-from common.models.charger import LocationCharger
-from django.conf import settings
-import requests
-from datetime import datetime, timedelta
 
 
 class RouteRetrieveView(RetrieveAPIView):
@@ -155,7 +144,7 @@ class RouteListCreateView(ListCreateAPIView):
     )
     def post(self, request: Request, *args, **kargs):
         # TODO search for a cached route to not duplicate the route request to maps api
-        driver = Driver.objects.get(id=request.user.id)
+        driver = get_object_or_404(Driver, pk=request.user.id)
 
         serializer: CreateRouteSerializer = self.get_serializer(
             data={**request.data, "driver": request.user.id}  # type: ignore

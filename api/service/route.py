@@ -175,11 +175,7 @@ def computeOptimizedRoute(
     # Decode the polyline
     decodedPolyline = polyline.decode(response.routes[0].polyline.encoded_polyline)
 
-    try:
-        user = Driver.objects.get(id=driverId)
-    except Driver.DoesNotExist:
-        raise APIException("Driver does not exist", 404)
-
+    user = Driver.objects.get(id=driverId)
     autonomy = user.autonomy
 
     finalRoute: list[dict[str, str | float]] = []
