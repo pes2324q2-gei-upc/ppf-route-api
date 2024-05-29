@@ -5,8 +5,6 @@ This module contains the views for the API endpoints related to routes.
 from math import atan2, cos, radians, sin, sqrt
 from typing import Union
 
-
-from django.shortcuts import get_object_or_404
 import requests
 from api.serializers import (
     CreateRouteSerializer,
@@ -17,15 +15,15 @@ from api.serializers import (
     PreviewRouteSerializer,
     UserSerializer,
 )
-
 from common.models.achievement import *
 from common.models.charger import *
+from common.models.charger import LocationCharger
 from common.models.fcm import *
 from common.models.payment import *
 from common.models.route import *
 from common.models.user import *
 from common.models.valuation import *
-
+from django.shortcuts import get_object_or_404
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.authentication import TokenAuthentication
@@ -47,28 +45,18 @@ from rest_framework.status import (
     HTTP_404_NOT_FOUND,
     HTTP_409_CONFLICT,
 )
-
 from rest_framework.views import APIView
 
+from .service.licitacio import serializeLicitacio
+from .service.notify import Notification, notifyDriver, notifyPassengers
 from .service.route import (
     computeMapsRoute,
     computeOptimizedRoute,
-
     forcedLeaveRoute,
     joinRoute,
     leaveRoute,
     validateJoinRoute,
 )
-from .service.notify import Notification, notifyDriver, notifyPassengers
-
-from .service.licitacio import serializeLicitacio
-
-# Don't delete, needed to create db with models
-from common.models.charger import ChargerLocationType, ChargerVelocity, ChargerLocationType
-from common.models.achievement import Achievement, UserAchievementProgress
-
-from math import radians, cos, sin, sqrt, atan2
-from common.models.charger import LocationCharger
 
 
 class RouteRetrieveView(RetrieveAPIView):
@@ -96,6 +84,17 @@ class RoutePreviewView(CreateAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = PreviewRouteSerializer
 
+    @swagger_auto_schema(
+        responses={
+            200: openapi.Response("Route preview", PreviewRouteSerializer),
+            400: openapi.Response("Bad request"),
+            404: openapi.Response("Route not found: a route to the destination could not be found"),
+            404: openapi.Response(
+                "Destination unreachable: a route is possible but can't be reached with the user's autonomy"
+            ),
+            404: openapi.Response("Driver not found"),
+        }
+    )
     def post(self, request: Request, *args, **kargs):
         serializer = self.get_serializer(
             data={"driver": request.user.id, **request.data}  # type: ignore
@@ -105,8 +104,7 @@ class RoutePreviewView(CreateAPIView):
             return Response(status=HTTP_400_BAD_REQUEST)
 
         # Compute the route and return it
-        routeData, waypoints = computeOptimizedRoute(
-            serializer, request.user.id)
+        routeData, waypoints = computeOptimizedRoute(serializer, request.user.id)
 
         return Response({**routeData, "waypoints": waypoints}, status=HTTP_200_OK)
 
@@ -281,12 +279,9 @@ class NearbyChargersView(ListAPIView):
 
     @swagger_auto_schema(
         manual_parameters=[
-            openapi.Parameter("latitud", openapi.IN_QUERY,
-                              type=openapi.TYPE_NUMBER),
-            openapi.Parameter("longitud", openapi.IN_QUERY,
-                              type=openapi.TYPE_NUMBER),
-            openapi.Parameter("radio_km", openapi.IN_QUERY,
-                              type=openapi.TYPE_NUMBER),
+            openapi.Parameter("latitud", openapi.IN_QUERY, type=openapi.TYPE_NUMBER),
+            openapi.Parameter("longitud", openapi.IN_QUERY, type=openapi.TYPE_NUMBER),
+            openapi.Parameter("radio_km", openapi.IN_QUERY, type=openapi.TYPE_NUMBER),
         ]
     )
     def get(self, request, *args, **kwargs):
@@ -311,7 +306,6 @@ class NearbyChargersView(ListAPIView):
         longitud = float(params.get("longitud"))  # type: ignore
         radio = float(params.get("radio_km"))  # type: ignore
 
-
         queryset = LocationCharger.objects.all()
         cargadores_cercanos = []
 
@@ -319,8 +313,7 @@ class NearbyChargersView(ListAPIView):
             # TODO can we get this out of the controller?
             # Apply the haversine formula to calculate the distance between two points
             lat1, lon1, lat2, lon2 = map(
-                radians, [latitud, longitud,
-                          cargador.latitud, cargador.longitud]
+                radians, [latitud, longitud, cargador.latitud, cargador.longitud]
             )
             dlon = lon2 - lon1
             dlat = lat2 - lat1
@@ -354,7 +347,6 @@ class RoutePassengersList(RetrieveAPIView):
         return Response(serializer.data)
 
 
-
 class FinishRoute(APIView):
     """
     End a route and save the changes to the database.
@@ -386,7 +378,10 @@ class FinishRoute(APIView):
             serializer = DetaliedRouteSerializer(route)
             return Response(serializer.data, status=HTTP_200_OK)
         else:
-            return Response({"error": "You are not the driver of this route"}, status=HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "You are not the driver of this route"}, status=HTTP_400_BAD_REQUEST
+            )
+
 
 class LicitacioService(CreateAPIView):
     """
@@ -406,5 +401,6 @@ class LicitacioService(CreateAPIView):
             return Response({"message": "Licitacion created successfully"}, status=HTTP_201_CREATED)
 
         else:
-            return Response({"message": "Error creating the licitacion"}, status=response.status_code)
-
+            return Response(
+                {"message": "Error creating the licitacion"}, status=response.status_code
+            )
