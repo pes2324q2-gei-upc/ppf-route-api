@@ -177,5 +177,302 @@
             "preference": 3,
             "iban": "ES4821005000512345678901"
         }
+    },
+    {
+        "model": "common.userachievementprogress",
+        "pk": 1,
+        "fields": {
+            "user": 1,
+            "achievement": 1,
+            "progress": 0,
+            "achieved": false,
+            "date_achieved": null
+        }
+    },
+    {
+        "model": "common.userachievementprogress",
+        "pk": 2,
+        "fields": {
+            "user": 1,
+            "achievement": 2,
+            "progress": 0,
+            "achieved": false,
+            "date_achieved": null
+        }
+    },
+    {
+        "model": "common.userachievementprogress",
+        "pk": 3,
+        "fields": {
+            "user": 1,
+            "achievement": 3,
+            "progress": 0,
+            "achieved": false,
+            "date_achieved": null
+        }
+    },
+    {
+        "model": "common.userachievementprogress",
+        "pk": 4,
+        "fields": {
+            "user": 1,
+            "achievement": 4,
+            "progress": 0,
+            "achieved": false,
+            "date_achieved": null
+        }
+    },
+    {
+        "model": "common.userachievementprogress",
+        "pk": 5,
+        "fields": {
+            "user": 1,
+            "achievement": 5,
+            "progress": 0,
+            "achieved": false,
+            "date_achieved": null
+        }
+    },
+    {
+        "model": "common.userachievementprogress",
+        "pk": 6,
+        "fields": {
+            "user": 1,
+            "achievement": 6,
+            "progress": 0,
+            "achieved": false,
+            "date_achieved": null
+        }
+    },
+    {
+        "model": "common.userachievementprogress",
+        "pk": 7,
+        "fields": {
+            "user": 1,
+            "achievement": 7,
+            "progress": 0,
+            "achieved": false,
+            "date_achieved": null
+        }
+    },
+    {
+        "model": "common.userachievementprogress",
+        "pk": 8,
+        "fields": {
+            "user": 1,
+            "achievement": 8,
+            "progress": 0,
+            "achieved": false,
+            "date_achieved": null
+        }
+    },
+    {
+        "model": "common.userachievementprogress",
+        "pk": 9,
+        "fields": {
+            "user": 1,
+            "achievement": 9,
+            "progress": 0,
+            "achieved": false,
+            "date_achieved": null
+        }
+    },
+    {
+        "model": "common.userachievementprogress",
+        "pk": 10,
+        "fields": {
+            "user": 2,
+            "achievement": 1,
+            "progress": 0,
+            "achieved": false,
+            "date_achieved": null
+        }
+    },
+    {
+        "model": "common.userachievementprogress",
+        "pk": 11,
+        "fields": {
+            "user": 2,
+            "achievement": 2,
+            "progress": 0,
+            "achieved": false,
+            "date_achieved": null
+        }
+    },
+    {
+        "model": "common.userachievementprogress",
+        "pk": 12,
+        "fields": {
+            "user": 2,
+            "achievement": 3,
+            "progress": 0,
+            "achieved": false,
+            "date_achieved": null
+        }
+    },
+    {
+        "model": "common.userachievementprogress",
+        "pk": 13,
+        "fields": {
+            "user": 2,
+            "achievement": 4,
+            "progress": 0,
+            "achieved": false,
+            "date_achieved": null
+        }
+    },
+    {
+        "model": "common.userachievementprogress",
+        "pk": 14,
+        "fields": {
+            "user": 2,
+            "achievement": 5,
+            "progress": 0,
+            "achieved": false,
+            "date_achieved": null
+        }
+    },
+    {
+        "model": "common.userachievementprogress",
+        "pk": 15,
+        "fields": {
+            "user": 2,
+            "achievement": 6,
+            "progress": 0,
+            "achieved": false,
+            "date_achieved": null
+        }
+    },
+    {
+        "model": "common.userachievementprogress",
+        "pk": 16,
+        "fields": {
+            "user": 2,
+            "achievement": 7,
+            "progress": 0,
+            "achieved": false,
+            "date_achieved": null
+        }
+    },
+    {
+        "model": "common.userachievementprogress",
+        "pk": 17,
+        "fields": {
+            "user": 2,
+            "achievement": 8,
+            "progress": 0,
+            "achieved": false,
+            "date_achieved": null
+        }
+    },
+    {
+        "model": "common.userachievementprogress",
+        "pk": 18,
+        "fields": {
+            "user": 2,
+            "achievement": 9,
+            "progress": 0,
+            "achieved": false,
+            "date_achieved": null
+        }
+    },
+    {
+        "model": "common.userachievementprogress",
+        "pk": 19,
+        "fields": {
+            "user": 3,
+            "achievement": 1,
+            "progress": 0,
+            "achieved": false,
+            "date_achieved": null
+        }
+    },
+    {
+        "model": "common.userachievementprogress",
+        "pk": 20,
+        "fields": {
+            "user": 3,
+            "achievement": 2,
+            "progress": 0,
+            "achieved": false,
+            "date_achieved": null
+        }
+    },
+    {
+        "model": "common.userachievementprogress",
+        "pk": 21,
+        "fields": {
+            "user": 3,
+            "achievement": 3,
+            "progress": 0,
+            "achieved": false,
+            "date_achieved": null
+        }
+    },
+    {
+        "model": "common.userachievementprogress",
+        "pk": 22,
+        "fields": {
+            "user": 3,
+            "achievement": 4,
+            "progress": 0,
+            "achieved": false,
+            "date_achieved": null
+        }
+    },
+    {
+        "model": "common.userachievementprogress",
+        "pk": 23,
+        "fields": {
+            "user": 3,
+            "achievement": 5,
+            "progress": 0,
+            "achieved": false,
+            "date_achieved": null
+        }
+    },
+    {
+        "model": "common.userachievementprogress",
+        "pk": 24,
+        "fields": {
+            "user": 3,
+            "achievement": 6,
+            "progress": 0,
+            "achieved": false,
+            "date_achieved": null
+        }
+    },
+    {
+        "model": "common.userachievementprogress",
+        "pk": 24,
+        "fields": {
+            "user": 3,
+            "achievement": 7,
+            "progress": 0,
+            "achieved": false,
+            "date_achieved": null
+        }
+    },
+    {
+        "model": "common.userachievementprogress",
+        "pk": 25,
+        "fields": {
+            "user": 3,
+            "achievement": 8,
+            "progress": 0,
+            "achieved": false,
+            "date_achieved": null
+        }
+    },
+    {
+        "model": "common.userachievementprogress",
+        "pk": 26,
+        "fields": {
+            "user": 3,
+            "achievement": 9,
+            "progress": 0,
+            "achieved": false,
+            "date_achieved": null
+        }
     }
 ]
