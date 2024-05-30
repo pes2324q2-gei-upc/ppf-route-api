@@ -1,10 +1,15 @@
-from pkg_resources import require
 from common.models.route import Route
 from rest_framework.serializers import ModelSerializer
 from rest_framework import serializers
 
 from common.models.user import User
 from common.models.charger import LocationCharger, ChargerLocationType, ChargerVelocity
+
+
+class RouteSerializer(ModelSerializer):
+    class Meta:
+        model = Route
+        fields = "__all__"
 
 
 class CreateRouteSerializer(ModelSerializer):
@@ -146,3 +151,7 @@ class LocationChargerSerializer(ModelSerializer):
 
 class PaymentMethodSerializer(serializers.Serializer):
     payment_method_id = serializers.CharField()
+
+
+class ExchangeCodeSerializer(serializers.Serializer):
+    code = serializers.CharField(max_length=255)

@@ -2,36 +2,41 @@
 This module contains the views for the API endpoints related to routes.
 """
 
+from datetime import datetime, timedelta
 from math import atan2, cos, radians, sin, sqrt
 from typing import Union
 
-
-from django.shortcuts import get_object_or_404
 import requests
 from api.serializers import (
+    RouteSerializer,
     CreateRouteSerializer,
     DetaliedRouteSerializer,
+    ExchangeCodeSerializer,
     ListRouteSerializer,
     LocationChargerSerializer,
     PaymentMethodSerializer,
     PreviewRouteSerializer,
     UserSerializer,
 )
-
+from api.service.licitacio import serializeLicitacio
+from api.service.notify import Notification, notifyDriver, notifyPassengers
 from common.models.achievement import *
+from common.models.calendar import *
 from common.models.charger import *
 from common.models.fcm import *
 from common.models.payment import *
 from common.models.route import *
 from common.models.user import *
 from common.models.valuation import *
-
+from django.conf import settings
+from django.shortcuts import get_object_or_404
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import (
     CreateAPIView,
+    GenericAPIView,
     ListAPIView,
     ListCreateAPIView,
     RetrieveAPIView,
@@ -47,28 +52,16 @@ from rest_framework.status import (
     HTTP_404_NOT_FOUND,
     HTTP_409_CONFLICT,
 )
-
 from rest_framework.views import APIView
 
 from .service.route import (
     computeMapsRoute,
     computeOptimizedRoute,
-
     forcedLeaveRoute,
     joinRoute,
     leaveRoute,
     validateJoinRoute,
 )
-from .service.notify import Notification, notifyDriver, notifyPassengers
-
-from .service.licitacio import serializeLicitacio
-
-# Don't delete, needed to create db with models
-from common.models.charger import ChargerLocationType, ChargerVelocity, ChargerLocationType
-from common.models.achievement import Achievement, UserAchievementProgress
-
-from math import radians, cos, sin, sqrt, atan2
-from common.models.charger import LocationCharger
 
 
 class RouteRetrieveView(RetrieveAPIView):
@@ -96,6 +89,17 @@ class RoutePreviewView(CreateAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = PreviewRouteSerializer
 
+    @swagger_auto_schema(
+        responses={
+            200: openapi.Response("Route preview", PreviewRouteSerializer),
+            400: openapi.Response("Bad request"),
+            404: openapi.Response("Route not found: a route to the destination could not be found"),
+            404: openapi.Response(
+                "Destination unreachable: a route is possible but can't be reached with the user's autonomy"
+            ),
+            404: openapi.Response("Driver not found"),
+        }
+    )
     def post(self, request: Request, *args, **kargs):
         serializer = self.get_serializer(
             data={"driver": request.user.id, **request.data}  # type: ignore
@@ -105,8 +109,7 @@ class RoutePreviewView(CreateAPIView):
             return Response(status=HTTP_400_BAD_REQUEST)
 
         # Compute the route and return it
-        routeData, waypoints = computeOptimizedRoute(
-            serializer, request.user.id)
+        routeData, waypoints = computeOptimizedRoute(serializer, request.user.id)
 
         return Response({**routeData, "waypoints": waypoints}, status=HTTP_200_OK)
 
@@ -142,7 +145,7 @@ class RouteListCreateView(ListCreateAPIView):
     )
     def post(self, request: Request, *args, **kargs):
         # TODO search for a cached route to not duplicate the route request to maps api
-        driver = Driver.objects.get(id=request.user.id)
+        driver = get_object_or_404(Driver, pk=request.user.id)
 
         serializer: CreateRouteSerializer = self.get_serializer(
             data={**request.data, "driver": request.user.id}  # type: ignore
@@ -159,7 +162,9 @@ class RouteListCreateView(ListCreateAPIView):
             waypoints=waypoints,
             **routeData,
         )
-        return Response(DetaliedRouteSerializer(instance).data, status=HTTP_201_CREATED)
+        # HACK por alguna putisima razon el tipo de duration es datetime.timedelta?? una puta Djangada mas y me mato
+        instance.duration = int(routeData["duration"])
+        return Response(RouteSerializer(instance).data, status=HTTP_201_CREATED)
 
 
 class RouteValidateJoinView(CreateAPIView):
@@ -281,12 +286,9 @@ class NearbyChargersView(ListAPIView):
 
     @swagger_auto_schema(
         manual_parameters=[
-            openapi.Parameter("latitud", openapi.IN_QUERY,
-                              type=openapi.TYPE_NUMBER),
-            openapi.Parameter("longitud", openapi.IN_QUERY,
-                              type=openapi.TYPE_NUMBER),
-            openapi.Parameter("radio_km", openapi.IN_QUERY,
-                              type=openapi.TYPE_NUMBER),
+            openapi.Parameter("latitud", openapi.IN_QUERY, type=openapi.TYPE_NUMBER),
+            openapi.Parameter("longitud", openapi.IN_QUERY, type=openapi.TYPE_NUMBER),
+            openapi.Parameter("radio_km", openapi.IN_QUERY, type=openapi.TYPE_NUMBER),
         ]
     )
     def get(self, request, *args, **kwargs):
@@ -311,7 +313,6 @@ class NearbyChargersView(ListAPIView):
         longitud = float(params.get("longitud"))  # type: ignore
         radio = float(params.get("radio_km"))  # type: ignore
 
-
         queryset = LocationCharger.objects.all()
         cargadores_cercanos = []
 
@@ -319,8 +320,7 @@ class NearbyChargersView(ListAPIView):
             # TODO can we get this out of the controller?
             # Apply the haversine formula to calculate the distance between two points
             lat1, lon1, lat2, lon2 = map(
-                radians, [latitud, longitud,
-                          cargador.latitud, cargador.longitud]
+                radians, [latitud, longitud, cargador.latitud, cargador.longitud]
             )
             dlon = lon2 - lon1
             dlat = lat2 - lat1
@@ -354,7 +354,6 @@ class RoutePassengersList(RetrieveAPIView):
         return Response(serializer.data)
 
 
-
 class FinishRoute(APIView):
     """
     End a route and save the changes to the database.
@@ -386,7 +385,10 @@ class FinishRoute(APIView):
             serializer = DetaliedRouteSerializer(route)
             return Response(serializer.data, status=HTTP_200_OK)
         else:
-            return Response({"error": "You are not the driver of this route"}, status=HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "You are not the driver of this route"}, status=HTTP_400_BAD_REQUEST
+            )
+
 
 class LicitacioService(CreateAPIView):
     """
@@ -406,5 +408,75 @@ class LicitacioService(CreateAPIView):
             return Response({"message": "Licitacion created successfully"}, status=HTTP_201_CREATED)
 
         else:
-            return Response({"message": "Error creating the licitacion"}, status=response.status_code)
+            return Response(
+                {"message": "Error creating the licitacion"}, status=response.status_code
+            )
 
+
+class ExchangeCodeView(GenericAPIView):
+    """
+    Through the code provided by the Google OAuth2 API, the access token and refresh token are obtained
+    POST /calendar_token
+    """
+
+    serializer_class = ExchangeCodeSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            code = serializer.validated_data.get("code")
+            user = self.request.user
+            userModel = User.objects.get(id=user.pk)
+
+            try:
+                token_data = self.exchange_code_for_tokens(code)
+                self.save_tokens(userModel, token_data)
+                return Response(
+                    {"message": "access_token and refresh_token saved successfully"},
+                    status=HTTP_200_OK,
+                )
+            except ValueError as e:
+                return Response({"error": str(e)}, status=HTTP_409_CONFLICT)
+        else:
+            return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
+
+    def exchange_code_for_tokens(self, code):
+        client_id = settings.CLIENT_ID
+        client_secret = settings.CLIENT_SECRET
+        redirect_uri = settings.REDIRECT_URI
+
+        token_url = "https://oauth2.googleapis.com/token"
+        payload = {
+            "code": code,
+            "client_id": client_id,
+            "client_secret": client_secret,
+            "redirect_uri": redirect_uri,
+            "grant_type": "authorization_code",
+        }
+
+        response = requests.post(token_url, data=payload)
+        token_data = response.json()
+
+        if "access_token" not in token_data:
+            raise ValueError(
+                "Access token not found in google response. Please retry with another code."
+            )
+
+        return token_data
+
+    def save_tokens(self, user, token_data):
+        access_token = token_data["access_token"]
+        refresh_token = token_data.get("refresh_token")
+        expires_in = token_data.get("expires_in")  # Lifetime of the access token in seconds
+        expires_at = datetime.now() + timedelta(seconds=expires_in) if expires_in else None
+
+        GoogleOAuth2Token.objects.update_or_create(
+            user=user,
+            defaults={
+                "access_token": access_token,
+                "refresh_token": refresh_token,
+                "expires_at": expires_at,
+            },
+        )
