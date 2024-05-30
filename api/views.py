@@ -57,6 +57,7 @@ from rest_framework.views import APIView
 from .service.route import (
     computeMapsRoute,
     computeOptimizedRoute,
+    createChatRoom,
     forcedLeaveRoute,
     joinRoute,
     leaveRoute,
@@ -164,6 +165,7 @@ class RouteListCreateView(ListCreateAPIView):
         )
         # HACK por alguna putisima razon el tipo de duration es datetime.timedelta?? una puta Djangada mas y me mato
         instance.duration = int(routeData["duration"])
+        createChatRoom(instance.pk, driver.pk, instance.destinationAlias)
         return Response(RouteSerializer(instance).data, status=HTTP_201_CREATED)
 
 
@@ -203,7 +205,6 @@ class RouteJoinView(CreateAPIView):
         userId = request.user.id
         validateJoinRoute(routeId, userId)
         joinRoute(routeId, userId, paymentMethodId)
-
         route = Route.objects.get(id=routeId)
         notifyDriver(routeId, Notification.passengerJoined(route.destinationAlias))
         return Response({"message": "User successfully joined the route"}, status=HTTP_200_OK)

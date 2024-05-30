@@ -1,4 +1,5 @@
 import json
+import logging
 from typing import Union
 
 import polyline
@@ -452,3 +453,18 @@ def forcedLeaveRoute(routeId: int, passengerId: int):
     # If refund fails, user is still removed from the route.
     # Contact us by email to resolve the issue.
     route.passengers.remove(User.objects.get(id=passengerId))
+
+
+def createChatRoom(routeId: int, driverId: int, routeName: str):
+    """
+    Creates a chat room for a route.
+
+    Args:
+        route_id (int): The ID of the route.
+    """
+    response = requests.post(
+        "http://chat-engine:8000/room",
+        json={"id": routeId, "driver": driverId, "name": routeName},
+    )
+    if response.status_code != 201:
+        logging.warning("Chat room creation failed")
